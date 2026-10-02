@@ -552,6 +552,60 @@ class SupabaseModulesRepositoryImpl(
         }
     }
 
+    override suspend fun submeterFormularioClinico(submissao: com.example.ui.screens.forms.ClinicalFormSubmission): Result<String> = withContext(Dispatchers.IO) {
+        if (!clientFactory.isReadyForConnection() || !sessionManager.isSessionValid()) {
+            return@withContext Result.failure(IllegalStateException("Sessão CIADI+ inválida ou Supabase não configurado."))
+        }
+        val uuidRegex = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+        if (!submissao.formularioId.matches(uuidRegex) || !submissao.pacienteId.matches(uuidRegex)) {
+            return@withContext Result.failure(IllegalArgumentException("Formulário ou assistido não possui um ID válido do CIADI."))
+        }
+        try {
+            val perfilId = sessionManager.getCurrentUserId().orEmpty()
+            val profissionais = clientFactory.restApi.getProfissionais(
+                perfilIdFilter = "eq.$perfilId"
+            )
+            if (!profissionais.isSuccessful || profissionais.body().isNullOrEmpty()) {
+                return@withContext Result.failure(IllegalStateException("Não foi encontrado o profissional CIADI associado à sessão A.T."))
+            }
+            val profissionalId = profissionais.body()!!.first().id
+            val avaliacaoResponse = clientFactory.restApi.createAvaliacaoClinica(
+                com.example.data.remote.dto.AvaliacaoClinicaCreateDto(
+                    formularioId = submissao.formularioId,
+                    pacienteId = submissao.pacienteId,
+                    profissionalId = profissionalId,
+                    estado = "CONCLUIDA",
+                    dataAvaliacao = java.time.Instant.now().toString(),
+                    criadoPor = perfilId
+                )
+            )
+            if (!avaliacaoResponse.isSuccessful || avaliacaoResponse.body().isNullOrEmpty()) {
+                return@withContext Result.failure(Exception(SupabaseErrorHandler.parseHttpErrorMessage(avaliacaoResponse.code())))
+            }
+            val avaliacaoId = avaliacaoResponse.body()!!.first().id
+            val respostas = org.json.JSONObject(submissao.respostasJson)
+            val keys = respostas.keys()
+            while (keys.hasNext()) {
+                val key = keys.next()
+                val value = respostas.opt(key)?.toString()
+                val resposta = clientFactory.restApi.createAvaliacaoResposta(
+                    com.example.data.remote.dto.AvaliacaoRespostaCreateDto(
+                        avaliacaoId = avaliacaoId,
+                        campoChave = key,
+                        valorJson = mapOf("valor" to value),
+                        preenchidoPor = perfilId
+                    )
+                )
+                if (!resposta.isSuccessful) {
+                    return@withContext Result.failure(Exception(SupabaseErrorHandler.parseHttpErrorMessage(resposta.code())))
+                }
+            }
+            Result.success(avaliacaoId)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     // --- ClinicalFormsRepository Impl ---
     override fun observeFormulariosClinicos(): Flow<List<FormularioClinicoDto>> = _formulariosClinicos.asStateFlow()
     override fun observeFormularios(): StateFlow<List<FormularioClinicoDto>> = _formulariosClinicos.asStateFlow()
