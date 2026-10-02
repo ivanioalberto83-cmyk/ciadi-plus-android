@@ -14,3 +14,5 @@ CIADI+ debug build: updated clinical forms, A.T., SOS and Bullying validation.
 Build trigger: security audit correction.
 
 Build trigger: non-blocking security scan.
+
+Build trigger: stabilize security scan.
