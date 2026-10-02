@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   export-source:
@@ -26,7 +26,7 @@ jobs:
           test -n "$SETTINGS"
           PROJECT_DIR="$(cd "$(dirname "$SETTINGS")" && pwd)"
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-      - name: Preparar fonte
+      - name: Preparar fonte para auditoria
         shell: bash
         run: |
           set -euo pipefail
@@ -38,9 +38,27 @@ jobs:
           cp -a build.gradle* settings.gradle* gradle.properties source-export/ 2>/dev/null || true
           find source-export -type f \( -name '*.kt' -o -name '*.java' -o -name '*.xml' -o -name '*.gradle' -o -name '*.kts' -o -name '*.properties' -o -name '*.json' -o -name '*.md' \) -print
           zip -qr "$GITHUB_WORKSPACE/CIADI-plus-source-audit.zip" source-export
-      - name: Publicar fonte
+      - name: Publicar fonte como artefacto
         uses: actions/upload-artifact@v4
         with:
           name: CIADI-plus-source-audit
           path: CIADI-plus-source-audit.zip
           retention-days: 7
+      - name: Espelhar fonte no repositório para permitir auditoria e correções
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf android-source
+          mkdir -p android-source
+          cp -a "$PROJECT_DIR/app/src" android-source/
+          cp -a "$PROJECT_DIR/gradle" android-source/ 2>/dev/null || true
+          cp -a "$PROJECT_DIR"/build.gradle* "$PROJECT_DIR"/settings.gradle* "$PROJECT_DIR"/gradle.properties android-source/ 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add android-source
+          if git diff --cached --quiet; then
+            echo "Fonte já está atualizada."
+          else
+            git commit -m "chore(ciadi-plus): export Android source for audit"
+            git push
+          fi
