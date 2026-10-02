@@ -115,6 +115,7 @@ enum class Permission(
                     WRITE_AT_INCIDENTE,
                     VIEW_AT_SUPERVISAO,
                     VIEW_CLINICAL_FORMS,
+                    SUBMIT_CLINICAL_FORM,
                     VIEW_DOCUMENTS_PUBLISHED,
                     ACCESS_CHAT,
                     RECEIVE_NOTIFICATIONS
