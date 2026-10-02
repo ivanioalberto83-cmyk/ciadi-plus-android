@@ -10,3 +10,5 @@ The workflow extracts the Android project from `ciadi+ (1).zip`, runs security c
 
 
 CIADI+ debug build: updated clinical forms, A.T., SOS and Bullying validation.
+
+Build trigger: security audit correction.
