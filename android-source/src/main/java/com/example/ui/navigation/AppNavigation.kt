@@ -156,6 +156,7 @@ fun AppNavigation(
                     onNavigateToNotifications = { navController.navigate(NavRoute.Notifications.route) },
                     onNavigateToSos = { navController.navigate(NavRoute.Sos.route) },
                     onNavigateToJaneth = { navController.navigate(NavRoute.Janeth.route) },
+                    onNavigateToForms = { navController.navigate(NavRoute.Forms.route) },
                     onSignOut = {
                         CoroutineScope(Dispatchers.Main).launch {
                             modulesRepository?.clearCache()
