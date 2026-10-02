@@ -165,6 +165,27 @@ jobs:
             CIADI-plus-debug.apk.sha256
           retention-days: 30
 
+      - name: Export source for implementation audit
+        if: success()
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          rm -rf source-export
+          mkdir -p source-export
+          cp -a app/src source-export/
+          cp -a gradle source-export/ 2>/dev/null || true
+          cp -a build.gradle* settings.gradle* gradle.properties source-export/ 2>/dev/null || true
+          zip -qr "$GITHUB_WORKSPACE/CIADI-plus-source-audit.zip" source-export
+
+      - name: Upload source audit
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CIADI-plus-source-audit
+          path: CIADI-plus-source-audit.zip
+          retention-days: 7
+
       - name: Upload audit reports
         if: always() && env.PROJECT_DIR != ''
         uses: actions/upload-artifact@v4
