@@ -596,7 +596,7 @@ class SupabaseModulesRepositoryImpl(
                     formularioId = submissao.formularioId,
                     pacienteId = submissao.pacienteId,
                     profissionalId = profissionalId,
-                    estado = "CONCLUIDA",
+                    estado = "em_avaliacao",
                     dataAvaliacao = java.time.Instant.now().toString(),
                     criadoPor = perfilId
                 )
@@ -621,6 +621,13 @@ class SupabaseModulesRepositoryImpl(
                 if (!resposta.isSuccessful) {
                     return@withContext Result.failure(Exception(SupabaseErrorHandler.parseHttpErrorMessage(resposta.code())))
                 }
+            }
+            val closeResponse = clientFactory.restApi.updateAvaliacaoClinica(
+                idFilter = "eq.$avaliacaoId",
+                estado = mapOf("estado" to "concluida")
+            )
+            if (!closeResponse.isSuccessful) {
+                return@withContext Result.failure(Exception(SupabaseErrorHandler.parseHttpErrorMessage(closeResponse.code())))
             }
             Result.success(avaliacaoId)
         } catch (e: Exception) {
