@@ -54,12 +54,15 @@ data class ClinicalFormSubmission(
 @Composable
 fun ClinicalFormRenderer(
     formulario: FormularioClinicoDto,
+    pacienteId: String,
     pacienteNome: String,
+    profissionalId: String? = null,
     onSubmit: (ClinicalFormSubmission) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val respostas = remember { mutableStateMapOf<String, String>() }
     var submitted by remember { mutableStateOf(false) }
+    var validationMessage by remember { mutableStateOf<String?>(null) }
 
     val parsedFields = remember(formulario.schemaJson) {
         parseSchemaFields(formulario.schemaJson)
@@ -123,14 +126,26 @@ fun ClinicalFormRenderer(
 
             Button(
                 onClick = {
+                    val missingRequired = parsedFields
+                        .filter { it.required && respostas[it.key].orEmpty().isBlank() }
+                        .map { it.label }
+                    if (missingRequired.isNotEmpty()) {
+                        validationMessage = "Preencha: ${missingRequired.joinToString(", ")}"
+                        return@Button
+                    }
+                    if (pacienteId.isBlank()) {
+                        validationMessage = "Selecione o assistido antes de submeter."
+                        return@Button
+                    }
                     val jsonOutput = JSONObject()
                     respostas.forEach { (k, v) -> jsonOutput.put(k, v) }
                     val submission = ClinicalFormSubmission(
                         formularioId = formulario.id,
-                        pacienteId = "paciente_selecionado",
-                        profissionalId = null,
+                        pacienteId = pacienteId,
+                        profissionalId = profissionalId,
                         respostasJson = jsonOutput.toString()
                     )
+                    validationMessage = null
                     submitted = true
                     onSubmit(submission)
                 },
@@ -139,6 +154,10 @@ fun ClinicalFormRenderer(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Submeter Formulário Clínico", fontWeight = FontWeight.Bold)
+            }
+            validationMessage?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(it, color = Color(0xFFB3261E), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }
