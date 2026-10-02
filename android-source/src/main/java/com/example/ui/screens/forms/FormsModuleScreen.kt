@@ -68,47 +68,49 @@ fun FormsModuleScreen(
         ?: remember { mutableStateOf(emptyList<FormularioClinicoDto>()) })
 
     val formsList = remember(rawForms) {
-        val atCodes = setOf(
-            "ACOMPANHAMENTO_ABA_ABC",
-            "AVALIACAO_NEURODESENVOLVIMENTO"
+        val abcAba = rawForms.firstOrNull { it.codigo == "ACOMPANHAMENTO_ABA_ABC" }
+        val avaliacao = rawForms.firstOrNull { it.codigo == "AVALIACAO_NEURODESENVOLVIMENTO" }
+
+        val baseAbcAba = abcAba ?: FormularioClinicoDto(
+            id = "form_at_aba_abc",
+            codigo = "ACOMPANHAMENTO_ABA_ABC",
+            nome = "Registo de Acompanhamento ABA — ABC CIADI",
+            areaAtuacao = "ABA / Intervenção Comportamental",
+            tipoFormulario = "evolucao",
+            descricao = "Registo ABC e acompanhamento ABA.",
+            schemaJson = """{"fields":[
+                {"key":"atividade","label":"Atividade / contexto","type":"text","required":true},
+                {"key":"objetivo","label":"Objetivo da sessão","type":"textarea","required":true},
+                {"key":"antecedente","label":"A — Antecedente","type":"textarea","required":true},
+                {"key":"comportamento_observavel","label":"B — Comportamento observável","type":"textarea","required":true},
+                {"key":"consequencia","label":"C — Consequência / resposta","type":"textarea","required":true},
+                {"key":"estrategia","label":"Estratégia utilizada","type":"textarea","required":true},
+                {"key":"resposta","label":"Resposta observada","type":"textarea","required":true},
+                {"key":"proximo_passo","label":"Próximo passo","type":"textarea"}
+            ]}"""
         )
-        val atForms = rawForms.filter { it.codigo in atCodes }
-        if (atForms.isNotEmpty()) atForms else listOf(
-            FormularioClinicoDto(
-                id = "form_at_aba_abc",
-                codigo = "ACOMPANHAMENTO_ABA_ABC",
-                nome = "Registo de Acompanhamento ABA — ABC CIADI",
-                areaAtuacao = "ABA / Intervenção Comportamental",
-                tipoFormulario = "evolucao",
-                descricao = "Registo ABC: antecedente, comportamento, consequência, estratégia, resposta e próximo passo.",
-                schemaJson = """{"fields":[
-                    {"key":"atividade","label":"Atividade / contexto","type":"text","required":true},
-                    {"key":"objetivo","label":"Objetivo da sessão","type":"textarea","required":true},
-                    {"key":"antecedente","label":"A — Antecedente","type":"textarea","required":true},
-                    {"key":"comportamento_observavel","label":"B — Comportamento observável","type":"textarea","required":true},
-                    {"key":"consequencia","label":"C — Consequência / resposta","type":"textarea","required":true},
-                    {"key":"estrategia","label":"Estratégia utilizada","type":"textarea","required":true},
-                    {"key":"resposta","label":"Resposta observada","type":"textarea","required":true},
-                    {"key":"proximo_passo","label":"Próximo passo","type":"textarea"}
-                ]}"""
-            ),
-            FormularioClinicoDto(
-                id = "form_at_avaliacao",
-                codigo = "AVALIACAO_NEURODESENVOLVIMENTO",
-                nome = "Ficha de Avaliação / Diagnóstico — Neurodesenvolvimento CIADI",
-                areaAtuacao = "Neurodesenvolvimento",
-                tipoFormulario = "avaliacao",
-                descricao = "Ficha de avaliação clínica para registo do desenvolvimento, funcionamento, necessidades e encaminhamentos.",
-                schemaJson = """{"fields":[
-                    {"key":"historia_desenvolvimento","label":"História do desenvolvimento","type":"textarea","required":true},
-                    {"key":"comunicacao","label":"Comunicação","type":"textarea","required":true},
-                    {"key":"interacao_social","label":"Interação social","type":"textarea"},
-                    {"key":"comportamento","label":"Comportamentos observados","type":"textarea"},
-                    {"key":"autonomia","label":"Autonomia","type":"textarea"},
-                    {"key":"necessidades","label":"Necessidades identificadas","type":"textarea","required":true},
-                    {"key":"encaminhamentos","label":"Encaminhamentos / recomendações","type":"textarea","required":true}
-                ]}"""
-            )
+        val baseAvaliacao = avaliacao ?: FormularioClinicoDto(
+            id = "form_at_avaliacao",
+            codigo = "AVALIACAO_NEURODESENVOLVIMENTO",
+            nome = "Ficha de Avaliação / Diagnóstico — Neurodesenvolvimento CIADI",
+            areaAtuacao = "Neurodesenvolvimento",
+            tipoFormulario = "avaliacao",
+            descricao = "Ficha de avaliação clínica de neurodesenvolvimento.",
+            schemaJson = """{"fields":[
+                {"key":"historia_desenvolvimento","label":"História do desenvolvimento","type":"textarea","required":true},
+                {"key":"comunicacao","label":"Comunicação","type":"textarea","required":true},
+                {"key":"interacao_social","label":"Interação social","type":"textarea"},
+                {"key":"comportamento","label":"Comportamentos observados","type":"textarea"},
+                {"key":"autonomia","label":"Autonomia","type":"textarea"},
+                {"key":"necessidades","label":"Necessidades identificadas","type":"textarea","required":true},
+                {"key":"encaminhamentos","label":"Encaminhamentos / recomendações","type":"textarea","required":true}
+            ]}"""
+        )
+
+        listOf(
+            baseAbcAba.copy(id = "${baseAbcAba.id}_abc", codigo = "ABC", nome = "Formulário ABC — Análise Funcional do Comportamento"),
+            baseAbcAba.copy(id = "${baseAbcAba.id}_aba", codigo = "ABA", nome = "Acompanhamento ABA — Registo de Sessão"),
+            baseAvaliacao.copy(id = "${baseAvaliacao.id}_diagnostico", codigo = "DIAGNOSTICO_AVALIACAO", nome = "Diagnóstico / Ficha de Avaliação — Neurodesenvolvimento")
         )
     }
 
