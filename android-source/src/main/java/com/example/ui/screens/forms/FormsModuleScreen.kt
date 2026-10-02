@@ -68,33 +68,46 @@ fun FormsModuleScreen(
         ?: remember { mutableStateOf(emptyList<FormularioClinicoDto>()) })
 
     val formsList = remember(rawForms) {
-        if (rawForms.isNotEmpty()) rawForms else listOf(
+        val atCodes = setOf(
+            "ACOMPANHAMENTO_ABA_ABC",
+            "AVALIACAO_NEURODESENVOLVIMENTO"
+        )
+        val atForms = rawForms.filter { it.codigo in atCodes }
+        if (atForms.isNotEmpty()) atForms else listOf(
             FormularioClinicoDto(
-                id = "form_at_diario",
-                codigo = "AT-01",
-                nome = "Registro Diário de Sessão A.T. (Campo/Escola)",
-                areaAtuacao = "Acompanhamento Terapêutico",
-                tipoFormulario = "ACOMPANHAMENTO",
-                descricao = "Protocolo de observação de metas, engajamento e incidentes em ambiente escolar/social.",
-                schemaJson = """{"fields":[{"key":"nivel_autonomia","label":"Nível de Autonomia","type":"radio","options":["Totalmente Independente","Ajuda Leve","Ajuda Moderada","Ajuda Total"]},{"key":"intervencao_comportamental","label":"Manejo Comportamental Realizado","type":"textarea"},{"key":"houve_desregulacao","label":"Houve desregulação sensorial/emocional","type":"checkbox"}]}"""
+                id = "form_at_aba_abc",
+                codigo = "ACOMPANHAMENTO_ABA_ABC",
+                nome = "Registo de Acompanhamento ABA — ABC CIADI",
+                areaAtuacao = "ABA / Intervenção Comportamental",
+                tipoFormulario = "evolucao",
+                descricao = "Registo ABC: antecedente, comportamento, consequência, estratégia, resposta e próximo passo.",
+                schemaJson = """{"fields":[
+                    {"key":"atividade","label":"Atividade / contexto","type":"text","required":true},
+                    {"key":"objetivo","label":"Objetivo da sessão","type":"textarea","required":true},
+                    {"key":"antecedente","label":"A — Antecedente","type":"textarea","required":true},
+                    {"key":"comportamento_observavel","label":"B — Comportamento observável","type":"textarea","required":true},
+                    {"key":"consequencia","label":"C — Consequência / resposta","type":"textarea","required":true},
+                    {"key":"estrategia","label":"Estratégia utilizada","type":"textarea","required":true},
+                    {"key":"resposta","label":"Resposta observada","type":"textarea","required":true},
+                    {"key":"proximo_passo","label":"Próximo passo","type":"textarea"}
+                ]}"""
             ),
             FormularioClinicoDto(
-                id = "form_fala_triagem",
-                codigo = "TF-01",
-                nome = "Avaliação Inicial de Comunicação & Fala",
-                areaAtuacao = "Terapia da Fala",
-                tipoFormulario = "AVALIACAO",
-                descricao = "Rastreio de linguagem expressiva, compreensiva e comunicação alternativa aumentativa (CAA).",
-                schemaJson = """{"fields":[{"key":"modalidade_comunicacao","label":"Modalidade Predominante","type":"radio","options":["Verbal / Vocal","Gestual / Apontamento","PECS / Pranchas","Sem Comunicação Funcional"]},{"key":"compreensao_comandos","label":"Compreensão de Comandos Simples","type":"checkbox"},{"key":"resumo_fonoaudiologico","label":"Parecer Fonoaudiológico","type":"textarea"}]}"""
-            ),
-            FormularioClinicoDto(
-                id = "form_to_sensorial",
-                codigo = "TO-01",
-                nome = "Perfil e Rastreio de Processamento Sensorial",
-                areaAtuacao = "Terapia Ocupacional",
-                tipoFormulario = "SENSORIAL",
-                descricao = "Identificação de hiper ou hiporresponsividade tátil, vestibular e proprioceptiva.",
-                schemaJson = """{"fields":[{"key":"reacao_auditiva","label":"Sensibilidade a Sons Altos","type":"radio","options":["Tolerante","Incomodado","Desorganiza com Choro"]},{"key":"atividades_vida_diaria","label":"Autonomia em AVDs (Alimentação / Vestuário)","type":"textarea"}]}"""
+                id = "form_at_avaliacao",
+                codigo = "AVALIACAO_NEURODESENVOLVIMENTO",
+                nome = "Ficha de Avaliação / Diagnóstico — Neurodesenvolvimento CIADI",
+                areaAtuacao = "Neurodesenvolvimento",
+                tipoFormulario = "avaliacao",
+                descricao = "Ficha de avaliação clínica para registo do desenvolvimento, funcionamento, necessidades e encaminhamentos.",
+                schemaJson = """{"fields":[
+                    {"key":"historia_desenvolvimento","label":"História do desenvolvimento","type":"textarea","required":true},
+                    {"key":"comunicacao","label":"Comunicação","type":"textarea","required":true},
+                    {"key":"interacao_social","label":"Interação social","type":"textarea"},
+                    {"key":"comportamento","label":"Comportamentos observados","type":"textarea"},
+                    {"key":"autonomia","label":"Autonomia","type":"textarea"},
+                    {"key":"necessidades","label":"Necessidades identificadas","type":"textarea","required":true},
+                    {"key":"encaminhamentos","label":"Encaminhamentos / recomendações","type":"textarea","required":true}
+                ]}"""
             )
         )
     }
