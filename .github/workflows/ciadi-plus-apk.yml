@@ -7,6 +7,10 @@ on:
       - 'ciadi+ (1).zip'
       - '.github/workflows/**'
       - 'README.md'
+      - 'AGENTS.md'
+      - 'CLAUDE.md'
+      - '.github/copilot-instructions.md'
+      - 'docs/**'
   workflow_dispatch:
 
 permissions:
