@@ -34,22 +34,26 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Extract Android project
+      - name: Select Android project
         shell: bash
         run: |
           set -euo pipefail
-          test -f 'ciadi+ (1).zip'
           rm -rf extracted
-          mkdir -p extracted
-          unzip -q 'ciadi+ (1).zip' -d extracted
-          SETTINGS="$(find extracted -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit)"
-          if [ -z "$SETTINGS" ]; then
-            echo "ERROR: no Gradle settings file found inside ZIP."
-            find extracted -maxdepth 4 -type f | sort | head -300
-            exit 1
+          if [ -f 'android-source/settings.gradle.kts' ] || [ -f 'android-source/settings.gradle' ]; then
+            PROJECT_DIR="$(cd android-source && pwd)"
+          else
+            test -f 'ciadi+ (1).zip'
+            mkdir -p extracted
+            unzip -q 'ciadi+ (1).zip' -d extracted
+            SETTINGS="$(find extracted -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit)"
+            if [ -z "$SETTINGS" ]; then
+              echo "ERROR: no Gradle settings file found inside ZIP."
+              find extracted -maxdepth 4 -type f | sort | head -300
+              exit 1
+            fi
+            PROJECT_DIR="$(dirname "$SETTINGS")"
+            PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"
           fi
-          PROJECT_DIR="$(dirname "$SETTINGS")"
-          PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
           echo "Android project: $PROJECT_DIR"
 
