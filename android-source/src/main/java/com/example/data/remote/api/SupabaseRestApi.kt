@@ -159,6 +159,26 @@ interface SupabaseRestApi {
         @Query("order") order: String = "titulo.asc"
     ): Response<List<FormularioClinicoDto>>
 
+    // --- 12.1 Avaliações clínicas preenchidas ---
+    @Headers("Prefer: return=representation")
+    @POST("rest/v1/ciadi_avaliacoes_clinicas")
+    suspend fun createAvaliacaoClinica(
+        @Body avaliacao: com.example.data.remote.dto.AvaliacaoClinicaCreateDto
+    ): Response<List<com.example.data.remote.dto.AvaliacaoClinicaDto>>
+
+    @Headers("Prefer: return=representation")
+    @POST("rest/v1/ciadi_avaliacoes_respostas")
+    suspend fun createAvaliacaoResposta(
+        @Body resposta: com.example.data.remote.dto.AvaliacaoRespostaCreateDto
+    ): Response<List<com.example.data.remote.dto.AvaliacaoRespostaCreateDto>>
+
+    // --- 12.2 Denúncias de bullying/proteção ---
+    @Headers("Prefer: return=representation")
+    @POST("rest/v1/ciadi_sos_denuncias")
+    suspend fun createBullyingDenuncia(
+        @Body denuncia: com.example.data.remote.dto.BullyingDenunciaCreateDto
+    ): Response<List<com.example.data.remote.dto.BullyingDenunciaCreateDto>>
+
     // --- 13. Documentos Clínicos / Laudos / P.E.I. (tabela: documentos_clinicos) ---
     @GET("rest/v1/documentos_clinicos")
     suspend fun getDocumentosClinicos(
