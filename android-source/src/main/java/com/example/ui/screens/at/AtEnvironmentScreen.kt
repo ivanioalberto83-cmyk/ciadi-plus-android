@@ -98,6 +98,7 @@ import kotlinx.coroutines.launch
  * 8. Organização
  * 9. Notificações
  * 10. Meu Perfil
+ * 11. Formulários Clínicos (ABC • ABA • Diagnóstico / Avaliação)
  */
 enum class AtMenuSection(val label: String, val icon: ImageVector, val tag: String) {
     INICIO("Início", Icons.Default.Home, "menu_at_inicio"),
@@ -109,7 +110,8 @@ enum class AtMenuSection(val label: String, val icon: ImageVector, val tag: Stri
     CHAT("Chat", Icons.AutoMirrored.Filled.Chat, "menu_at_chat"),
     ORGANIZACAO("Organização", Icons.Default.CorporateFare, "menu_at_organizacao"),
     NOTIFICACOES("Notificações", Icons.Default.Notifications, "menu_at_notificacoes"),
-    PERFIL("Meu Perfil", Icons.Default.Person, "menu_at_perfil")
+    PERFIL("Meu Perfil", Icons.Default.Person, "menu_at_perfil"),
+    FORMULARIOS("Formulários", Icons.Default.Assignment, "menu_at_formularios")
 }
 
 @Composable
@@ -121,6 +123,7 @@ fun AtEnvironmentScreen(
     onNavigateToNotifications: () -> Unit,
     onNavigateToSos: () -> Unit,
     onNavigateToJaneth: () -> Unit,
+    onNavigateToForms: () -> Unit,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -403,6 +406,9 @@ fun AtEnvironmentScreen(
                                     }
                                     AtMenuSection.NOTIFICACOES -> {
                                         onNavigateToNotifications()
+                                    }
+                                    AtMenuSection.FORMULARIOS -> {
+                                        onNavigateToForms()
                                     }
                                     else -> {
                                         selectedSection = sec
