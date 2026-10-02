@@ -166,6 +166,12 @@ interface SupabaseRestApi {
         @Body avaliacao: com.example.data.remote.dto.AvaliacaoClinicaCreateDto
     ): Response<List<com.example.data.remote.dto.AvaliacaoClinicaDto>>
 
+    @PATCH("rest/v1/ciadi_avaliacoes_clinicas")
+    suspend fun updateAvaliacaoClinica(
+        @Query("id") idFilter: String,
+        @Body estado: Map<String, String>
+    ): Response<List<com.example.data.remote.dto.AvaliacaoClinicaDto>>
+
     @Headers("Prefer: return=representation")
     @POST("rest/v1/ciadi_avaliacoes_respostas")
     suspend fun createAvaliacaoResposta(
