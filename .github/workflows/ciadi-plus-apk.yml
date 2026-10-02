@@ -143,18 +143,58 @@ jobs:
           cd "$PROJECT_DIR"
           gradle assembleDebug --no-daemon --stacktrace
 
-      - name: Verify APK
+      - name: Align and explicitly sign APK
         shell: bash
         run: |
           set -euo pipefail
           cd "$PROJECT_DIR"
+
           APK="$(find . -type f -path '*/build/outputs/apk/debug/*.apk' -print -quit)"
           test -n "$APK"
-          echo "APK=$APK"
+          echo "Unsigned APK produced by Gradle: $APK"
           ls -lh "$APK"
-          sha256sum "$APK" | tee apk.sha256
-          cp "$APK" "$GITHUB_WORKSPACE/CIADI-plus-debug.apk"
-          cp apk.sha256 "$GITHUB_WORKSPACE/CIADI-plus-debug.apk.sha256"
+
+          APKSIGNER="$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name apksigner -print | sort -V | tail -1)"
+          ZIPALIGN="$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name zipalign -print | sort -V | tail -1)"
+          test -x "$APKSIGNER"
+          test -x "$ZIPALIGN"
+
+          ALIGNED="$GITHUB_WORKSPACE/CIADI-plus-debug-aligned.apk"
+          SIGNED="$GITHUB_WORKSPACE/CIADI-plus-debug.apk"
+
+          "$ZIPALIGN" -f -p 4 "$APK" "$ALIGNED"
+
+          "$APKSIGNER" sign \
+            --ks "$PROJECT_DIR/debug.keystore" \
+            --ks-pass pass:android \
+            --ks-key-alias androiddebugkey \
+            --key-pass pass:android \
+            --out "$SIGNED" \
+            "$ALIGNED"
+
+          "$APKSIGNER" verify --verbose --print-certs "$SIGNED"
+
+          test -s "$SIGNED"
+          sha256sum "$SIGNED" | tee "$GITHUB_WORKSPACE/CIADI-plus-debug.apk.sha256"
+          ls -lh "$SIGNED"
+          file "$SIGNED"
+          rm -f "$ALIGNED"
+
+      - name: Verify APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "$GITHUB_WORKSPACE/CIADI-plus-debug.apk"
+          test -f "$GITHUB_WORKSPACE/CIADI-plus-debug.apk.sha256"
+
+          # Refuse to publish an unsigned/invalid APK.
+          APKSIGNER="$(find "$ANDROID_SDK_ROOT/build-tools" -type f -name apksigner -print | sort -V | tail -1)"
+          test -x "$APKSIGNER"
+          "$APKSIGNER" verify --verbose --print-certs "$GITHUB_WORKSPACE/CIADI-plus-debug.apk"
+
+          echo "Final installable APK:"
+          ls -lh "$GITHUB_WORKSPACE/CIADI-plus-debug.apk"
+          cat "$GITHUB_WORKSPACE/CIADI-plus-debug.apk.sha256"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
