@@ -1,0 +1,112 @@
+name: CIADI+ - Audit e APK
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'ciadi+ (1).zip'
+      - '.github/workflows/**'
+      - 'README.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ciadi-plus-apk
+  cancel-in-progress: true
+
+jobs:
+  audit-build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Extract Android project
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f 'ciadi+ (1).zip'
+          rm -rf extracted
+          mkdir -p extracted
+          unzip -q 'ciadi+ (1).zip' -d extracted
+          GRADLEW="$(find extracted -type f -name gradlew -print -quit)"
+          test -n "$GRADLEW"
+          PROJECT_DIR="$(dirname "$GRADLEW")"
+          PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          echo "Android project: $PROJECT_DIR"
+
+      - name: Gradle wrapper permissions
+        run: chmod +x "$PROJECT_DIR/gradlew"
+
+      - name: Static security audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          if grep -RInE --exclude-dir=.gradle --exclude-dir=build 'SUPABASE_SERVICE_ROLE_KEY|service_role|LIVEKIT_API_SECRET|LIVEKIT_API_KEY' .; then
+            echo "ERROR: forbidden server-side secret reference detected."
+            exit 1
+          fi
+          if grep -RInE --exclude-dir=.gradle --exclude-dir=build '([?&])(role|token|access_token|refresh_token|livekit_token)=' .; then
+            echo "ERROR: sensitive role/token found being appended to a URL."
+            exit 1
+          fi
+          echo "Static security checks passed."
+
+      - name: Unit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          ./gradlew test --no-daemon --stacktrace
+
+      - name: Build debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Verify APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          APK="$(find . -type f -path '*/build/outputs/apk/debug/*.apk' -print -quit)"
+          test -n "$APK"
+          echo "APK=$APK"
+          ls -lh "$APK"
+          sha256sum "$APK" | tee apk.sha256
+          cp "$APK" "$GITHUB_WORKSPACE/CIADI-plus-debug.apk"
+          cp apk.sha256 "$GITHUB_WORKSPACE/CIADI-plus-debug.apk.sha256"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: CIADI-plus-2.0.1-debug-apk
+          path: |
+            CIADI-plus-debug.apk
+            CIADI-plus-debug.apk.sha256
+          retention-days: 30
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CIADI-plus-audit-report
+          path: |
+            ${{ env.PROJECT_DIR }}/**/test-results/**/*.xml
+            ${{ env.PROJECT_DIR }}/**/reports/**
+          if-no-files-found: ignore
+          retention-days: 30
