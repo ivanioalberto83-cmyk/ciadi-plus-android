@@ -530,3 +530,50 @@ data class AcompanhamentoDiarioAbaDto(
 )
 
 
+
+
+// 12.1 Avaliação Clínica / respostas de formulário
+@JsonClass(generateAdapter = true)
+data class AvaliacaoClinicaCreateDto(
+    @param:Json(name = "formulario_id") val formularioId: String,
+    @param:Json(name = "paciente_id") val pacienteId: String,
+    @param:Json(name = "profissional_id") val profissionalId: String,
+    @param:Json(name = "estado") val estado: String = "EM_PREENCHIMENTO",
+    @param:Json(name = "data_avaliacao") val dataAvaliacao: String,
+    @param:Json(name = "versao") val versao: Int = 1,
+    @param:Json(name = "criado_por") val criadoPor: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class AvaliacaoClinicaDto(
+    @param:Json(name = "id") val id: String,
+    @param:Json(name = "formulario_id") val formularioId: String,
+    @param:Json(name = "paciente_id") val pacienteId: String,
+    @param:Json(name = "profissional_id") val profissionalId: String,
+    @param:Json(name = "estado") val estado: String,
+    @param:Json(name = "data_avaliacao") val dataAvaliacao: String,
+    @param:Json(name = "versao") val versao: Int
+)
+
+@JsonClass(generateAdapter = true)
+data class AvaliacaoRespostaCreateDto(
+    @param:Json(name = "avaliacao_id") val avaliacaoId: String,
+    @param:Json(name = "campo_chave") val campoChave: String,
+    @param:Json(name = "valor_json") val valorJson: Map<String, String?>,
+    @param:Json(name = "preenchido_por") val preenchidoPor: String? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class BullyingDenunciaCreateDto(
+    @param:Json(name = "perfil_id") val perfilId: String?,
+    @param:Json(name = "paciente_id") val pacienteId: String?,
+    @param:Json(name = "anonima") val anonima: Boolean = false,
+    @param:Json(name = "codigo_acompanhamento") val codigoAcompanhamento: String,
+    @param:Json(name = "categoria") val categoria: String = "BULLYING",
+    @param:Json(name = "gravidade") val gravidade: String = "MEDIA",
+    @param:Json(name = "titulo") val titulo: String,
+    @param:Json(name = "descricao") val descricao: String,
+    @param:Json(name = "local_ocorrencia") val localOcorrencia: String? = null,
+    @param:Json(name = "evidencias") val evidencias: Map<String, String?> = emptyMap(),
+    @param:Json(name = "estado") val estado: String = "ABERTA"
+)
