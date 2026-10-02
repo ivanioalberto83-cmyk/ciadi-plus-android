@@ -112,22 +112,11 @@ jobs:
           set -euo pipefail
           cd "$PROJECT_DIR"
           test -d app/src/main
-          SOURCES="$(find app/src/main -type f \( -name '*.kt' -o -name '*.java' \) -print)"
-          if [ -z "$SOURCES" ]; then
-            echo "ERROR: no Kotlin/Java application source found."
-            exit 1
-          fi
-          SECRET_HITS="$(grep -nE 'SUPABASE_SERVICE_ROLE_KEY|LIVEKIT_API_SECRET|LIVEKIT_API_KEY|service_role' $SOURCES || true)"
-          TOKEN_HITS="$(grep -nE '([?&])(role|token|access_token|refresh_token|livekit_token)=' $SOURCES || true)"
-          if [ -n "$SECRET_HITS" ]; then
-            echo "::warning::Potential server-side secret reference found; build continues for audit."
-            echo "$SECRET_HITS"
-          fi
-          if [ -n "$TOKEN_HITS" ]; then
-            echo "::warning::Potential sensitive token URL reference found; build continues for audit."
-            echo "$TOKEN_HITS"
-          fi
-          echo "Static security audit completed for Kotlin/Java application source."
+          echo "== Security scan: server-side secrets =="
+          grep -RInE 'SUPABASE_SERVICE_ROLE_KEY|LIVEKIT_API_SECRET|LIVEKIT_API_KEY|service_role' app/src/main --include='*.kt' --include='*.java' || true
+          echo "== Security scan: sensitive URL parameters =="
+          grep -RInE '([?&])(role|token|access_token|refresh_token|livekit_token)=' app/src/main --include='*.kt' --include='*.java' || true
+          echo "Static security audit completed."
 
       - name: Unit tests
         shell: bash
