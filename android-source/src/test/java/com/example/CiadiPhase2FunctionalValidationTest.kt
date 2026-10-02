@@ -129,7 +129,7 @@ class CiadiPhase2FunctionalValidationTest {
             RoleCapability(
                 role = UserRole.AT,
                 podeVerAgenda = true, podeGerirAgenda = false, podeVerCriancas = false,
-                podeSubmeterFormulario = false, podeGerirDocumentos = false, podeVerDocumentosPublicados = true,
+                podeSubmeterFormulario = true, podeGerirDocumentos = false, podeVerDocumentosPublicados = true,
                 podeRegistrarSessaoAt = true, podeAcessarChat = true, podeReceberNotificacoes = true, podeAuditarAdmin = false
             ),
             RoleCapability(
