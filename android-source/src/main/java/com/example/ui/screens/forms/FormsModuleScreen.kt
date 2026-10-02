@@ -1,5 +1,10 @@
 package com.example.ui.screens.forms
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.print.PrintAttributes
+import android.print.PrintManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
