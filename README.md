@@ -1,11 +1,9 @@
-<div align="center">
+# CIADI+
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+Android CIADI+ project package.
 
-  <h1>Built with AI Studio</h2>
+## Automated build
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+GitHub Actions workflow: `.github/workflows/ciadi-plus-apk.yml`
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
-
-</div>
+The workflow extracts the Android project from `ciadi+ (1).zip`, runs security checks and unit tests, builds the debug APK, verifies the APK exists, and publishes it as a workflow artifact.
