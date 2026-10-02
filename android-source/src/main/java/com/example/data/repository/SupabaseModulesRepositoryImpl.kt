@@ -513,6 +513,28 @@ class SupabaseModulesRepositoryImpl(
         }
     }
 
+    override suspend fun registrarDenunciaBullying(
+        pacienteId: String?,
+        titulo: String,
+        descricao: String,
+        gravidade: String
+    ): Result<String> = withContext(Dispatchers.IO) {
+        if (!clientFactory.isReadyForConnection() || !sessionManager.isSessionValid()) {
+            return@withContext Result.failure(IllegalStateException("Sessão CIADI+ inválida ou Supabase não configurado."))
+        }
+        try {
+            val codigo = "BUL-" + System.currentTimeMillis().toString().takeLast(8)
+            val req = com.example.data.remote.dto.BullyingDenunciaCreateDto(
+                perfilId = sessionManager.getCurrentUserId(), pacienteId = pacienteId,
+                codigoAcompanhamento = codigo, gravidade = gravidade,
+                titulo = titulo, descricao = descricao
+            )
+            val resp = clientFactory.restApi.createBullyingDenuncia(req)
+            if (resp.isSuccessful) Result.success(codigo)
+            else Result.failure(Exception(SupabaseErrorHandler.parseHttpErrorMessage(resp.code())))
+        } catch (e: Exception) { Result.failure(e) }
+    }
+
     // --- SosRepository Impl (RPC: ciadi_criar_alerta_sos) ---
     override suspend fun enviarAlertaSos(
         pacienteId: String,
