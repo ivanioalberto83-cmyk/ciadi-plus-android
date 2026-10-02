@@ -7,6 +7,13 @@ import com.example.data.remote.dto.SosAlertaResultDto
  * Consome a RPC segura do Supabase: 'ciadi_criar_alerta_sos'.
  */
 interface SosRepository {
+    suspend fun registrarDenunciaBullying(
+        pacienteId: String?,
+        titulo: String,
+        descricao: String,
+        gravidade: String = "MEDIA"
+    ): Result<String>
+
     suspend fun enviarAlertaSos(
         pacienteId: String,
         mensagem: String,
