@@ -18,3 +18,5 @@ Build trigger: non-blocking security scan.
 Build trigger: stabilize security scan.
 
 Build trigger: continue after security audit.
+
+Build trigger: continue APK build after test failure.
