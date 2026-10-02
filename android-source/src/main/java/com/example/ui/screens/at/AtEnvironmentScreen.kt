@@ -192,6 +192,7 @@ fun AtEnvironmentScreen(
         scope.launch {
             isRefreshing = true
             repoImpl?.syncATData()
+            repoImpl?.syncFormularios()
             isRefreshing = false
         }
     }
