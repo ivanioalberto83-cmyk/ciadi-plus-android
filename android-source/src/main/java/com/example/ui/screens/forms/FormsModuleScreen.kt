@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.core.config.SupabaseConfig
 import com.example.data.remote.dto.FormularioClinicoDto
+import com.example.data.remote.dto.PacienteDto
 import com.example.domain.model.Permission
 import com.example.domain.model.UserProfile
 import com.example.domain.repository.ModulesRepository
@@ -62,6 +63,12 @@ fun FormsModuleScreen(
     val scope = rememberCoroutineScope()
 
     var activeFormToFill by remember { mutableStateOf<FormularioClinicoDto?>(null) }
+    var selectedPatient by remember { mutableStateOf<PacienteDto?>(null) }
+    var lastSubmission by remember { mutableStateOf<ClinicalFormSubmission?>(null) }
+
+    val patients by (modulesRepository?.observePacientes()
+        ?.collectAsState(initial = emptyList())
+        ?: remember { mutableStateOf(emptyList<PacienteDto>()) })
 
     val rawForms by (modulesRepository?.observeFormulariosClinicos()
         ?.collectAsState(initial = emptyList())
@@ -133,14 +140,26 @@ fun FormsModuleScreen(
                     .background(CIADIColors.BackgroundLight)
                     .padding(16.dp)
             ) {
+                if (lastSubmission != null) {
+                    item {
+                        SubmissionActions(context, activeFormToFill!!, lastSubmission!!, onDone = { activeFormToFill = null })
+                    }
+                }
                 item {
                     ClinicalFormRenderer(
                         formulario = activeFormToFill!!,
-                        pacienteNome = user.activePatientName ?: "Lucas Silva",
+                        pacienteId = selectedPatient?.id.orEmpty(),
+                        pacienteNome = selectedPatient?.nome ?: user.activePatientName ?: "Assistido",
                         onSubmit = { submission ->
                             scope.launch {
-                                snackbarHostState.showSnackbar("Formulário submetido e associado ao prontuário via RLS.")
-                                activeFormToFill = null
+                                val result = modulesRepository?.submeterFormularioClinico(submission)
+                                    ?: Result.failure(Exception("Módulo clínico não está ligado ao Supabase."))
+                                if (result.isSuccess) {
+                                    lastSubmission = submission
+                                    snackbarHostState.showSnackbar("Formulário enviado e registado no prontuário CIADI.")
+                                } else {
+                                    snackbarHostState.showSnackbar(result.exceptionOrNull()?.message ?: "Não foi possível enviar o formulário.")
+                                }
                             }
                         }
                     )
@@ -192,7 +211,14 @@ fun FormsModuleScreen(
                     elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { activeFormToFill = form }
+                        .clickable {
+                            if (selectedPatient == null) {
+                                scope.launch { snackbarHostState.showSnackbar("Selecione primeiro o assistido.") }
+                            } else {
+                                activeFormToFill = form
+                                lastSubmission = null
+                            }
+                        }
                 ) {
                     Row(
                         modifier = Modifier
@@ -234,6 +260,59 @@ fun FormsModuleScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+
+@Composable
+private fun SubmissionActions(
+    context: Context,
+    form: FormularioClinicoDto,
+    submission: ClinicalFormSubmission,
+    onDone: () -> Unit
+) {
+    val body = remember(submission) {
+        buildString {
+            append("CIADI+ — ${form.nome}\n")
+            append("Assistido ID: ${submission.pacienteId}\n\n")
+            val json = JSONObject(submission.respostasJson)
+            val keys = json.keys()
+            while (keys.hasNext()) {
+                val key = keys.next()
+                append("$key: ${json.optString(key)}\n")
+            }
+        }
+    }
+    Card(colors = CardDefaults.cardColors(containerColor = Color.White), modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
+        Column(Modifier.padding(16.dp)) {
+            Text("Formulário registado", fontWeight = FontWeight.Bold, color = CIADIColors.TealPrimary)
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(modifier = Modifier.weight(1f), onClick = {
+                    context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, body)
+                        putExtra(Intent.EXTRA_SUBJECT, form.nome)
+                    }, "Ver / enviar formulário"))
+                }) { Text("Ver / Enviar", fontSize = 12.sp) }
+                Button(modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = CIADIColors.TealPrimary), onClick = {
+                    val printManager = context.getSystemService(Context.PRINT_SERVICE) as PrintManager
+                    printManager.print("CIADI+_${form.codigo ?: "FORM"}", ClinicalFormPrintAdapter(form.nome, body), PrintAttributes.Builder().build())
+                }) { Text("Imprimir", fontSize = 12.sp) }
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                OutlinedButton(modifier = Modifier.weight(1f), onClick = {
+                    val intent = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; setPackage("com.whatsapp"); putExtra(Intent.EXTRA_TEXT, body) }
+                    try { context.startActivity(intent) } catch (_: Exception) { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, body) }, "Enviar formulário")) }
+                }) { Text("WhatsApp", fontSize = 12.sp) }
+                OutlinedButton(modifier = Modifier.weight(1f), onClick = {
+                    context.startActivity(Intent(Intent.ACTION_SENDTO).apply { data = Uri.parse("mailto:"); putExtra(Intent.EXTRA_SUBJECT, form.nome); putExtra(Intent.EXTRA_TEXT, body) })
+                }) { Text("Email", fontSize = 12.sp) }
+            }
+            Spacer(Modifier.height(8.dp))
+            Button(onClick = onDone, modifier = Modifier.fillMaxWidth()) { Text("Voltar aos formulários") }
         }
     }
 }
