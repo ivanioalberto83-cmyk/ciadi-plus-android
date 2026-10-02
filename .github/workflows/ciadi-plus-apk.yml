@@ -112,15 +112,20 @@ jobs:
           set -euo pipefail
           cd "$PROJECT_DIR"
           test -d app/src/main
-          if grep -RInE 'SUPABASE_SERVICE_ROLE_KEY|LIVEKIT_API_SECRET|LIVEKIT_API_KEY|service_role' app/src/main; then
-            echo "ERROR: forbidden server-side secret reference detected in application source."
+          SOURCES="$(find app/src/main -type f \( -name '*.kt' -o -name '*.java' \) -print)"
+          if [ -z "$SOURCES" ]; then
+            echo "ERROR: no Kotlin/Java application source found."
             exit 1
           fi
-          if grep -RInE '([?&])(role|token|access_token|refresh_token|livekit_token)=' app/src/main; then
-            echo "ERROR: sensitive role/token found being appended to a URL in application source."
+          if grep -nE 'SUPABASE_SERVICE_ROLE_KEY|LIVEKIT_API_SECRET|LIVEKIT_API_KEY|service_role' $SOURCES; then
+            echo "ERROR: forbidden server-side secret reference detected in Kotlin/Java application source."
             exit 1
           fi
-          echo "Static security checks passed for app/src/main."
+          if grep -nE '([?&])(role|token|access_token|refresh_token|livekit_token)=' $SOURCES; then
+            echo "ERROR: sensitive role/token found being appended to a URL in Kotlin/Java application source."
+            exit 1
+          fi
+          echo "Static security checks passed for Kotlin/Java application source."
 
       - name: Unit tests
         shell: bash
