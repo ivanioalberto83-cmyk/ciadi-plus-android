@@ -1,0 +1,46 @@
+name: CIADI+ - Exportar fonte para auditoria
+
+on:
+  push:
+    paths:
+      - 'ciadi+ (1).zip'
+      - '.github/workflows/ciadi-plus-source-export.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extrair projeto Android
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf extracted
+          mkdir -p extracted
+          unzip -q 'ciadi+ (1).zip' -d extracted
+          SETTINGS="$(find extracted -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit)"
+          test -n "$SETTINGS"
+          PROJECT_DIR="$(cd "$(dirname "$SETTINGS")" && pwd)"
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+      - name: Preparar fonte
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          rm -rf source-export
+          mkdir -p source-export
+          cp -a app/src source-export/
+          cp -a gradle source-export/ 2>/dev/null || true
+          cp -a build.gradle* settings.gradle* gradle.properties source-export/ 2>/dev/null || true
+          find source-export -type f \( -name '*.kt' -o -name '*.java' -o -name '*.xml' -o -name '*.gradle' -o -name '*.kts' -o -name '*.properties' -o -name '*.json' -o -name '*.md' \) -print
+          zip -qr "$GITHUB_WORKSPACE/CIADI-plus-source-audit.zip" source-export
+      - name: Publicar fonte
+        uses: actions/upload-artifact@v4
+        with:
+          name: CIADI-plus-source-audit
+          path: CIADI-plus-source-audit.zip
+          retention-days: 7
