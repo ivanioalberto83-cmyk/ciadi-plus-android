@@ -53,6 +53,36 @@ jobs:
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
           echo "Android project: $PROJECT_DIR"
 
+      - name: Audit clinical forms source flow
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          REPORT="$GITHUB_WORKSPACE/ciadi-clinical-forms-source-audit.txt"
+          : > "$REPORT"
+          {
+            echo "CIADI+ - Clinical Forms Source Audit"
+            echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo
+            echo "== Relevant source files =="
+            find app/src/main -type f \( -name '*.kt' -o -name '*.java' \) | sort | grep -Ei 'form|document|clinical|avali|triag|supabase' || true
+            echo
+            echo "== ClinicalFormSubmission references =="
+            grep -RInE 'ClinicalFormSubmission|FormularioClinicoDto|syncFormularios' app/src/main || true
+            echo
+            echo "== Repository clinical/document methods =="
+            grep -RInE 'emitirDocumentoClinico|emitirDocumento|getHistoricoDocumento|syncDocumentos|registrarAcompanhamentoAba|registrarObjetivo|registrarIncidente|registrarSessao' app/src/main || true
+            echo
+            echo "== Supabase table references =="
+            grep -RInE 'ciadi_formularios_clinicos|documentos_clinicos|ciadi_documentos_clinicos_historico|ciadi_avaliacoes_clinicas|ciadi_avaliacoes_respostas|ciadi_avaliacoes_resultados|ciadi_triagens' app/src/main || true
+            echo
+            echo "== Form submission verbs/calls =="
+            grep -RInE '\.(insert|update|upsert|delete|select)\(' app/src/main | grep -Ei 'form|document|clinical|avali|triag|supabase' || true
+          } >> "$REPORT"
+          test -s "$REPORT"
+          echo "Clinical forms source audit created: $REPORT"
+          sed -n '1,260p' "$REPORT"
+
       - name: Install Gradle 9.3.1
         shell: bash
         run: |
@@ -101,7 +131,7 @@ jobs:
           set -euo pipefail
           cd "$PROJECT_DIR"
           if [ ! -f debug.keystore ]; then
-            keytool -genkeypair -v               -keystore debug.keystore               -storepass android               -alias androiddebugkey               -keypass android               -keyalg RSA               -keysize 2048               -validity 10000               -dname "CN=Android Debug,O=Android,C=US"
+            keytool -genkeypair -v -keystore debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
           test -f debug.keystore
           ls -lh debug.keystore
@@ -141,6 +171,7 @@ jobs:
         with:
           name: CIADI-plus-audit-report
           path: |
+            ciadi-clinical-forms-source-audit.txt
             ${{ env.PROJECT_DIR }}/**/test-results/**/*.xml
             ${{ env.PROJECT_DIR }}/**/reports/**
           if-no-files-found: ignore
