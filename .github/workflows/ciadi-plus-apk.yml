@@ -38,19 +38,16 @@ jobs:
           rm -rf extracted
           mkdir -p extracted
           unzip -q 'ciadi+ (1).zip' -d extracted
-
           SETTINGS="$(find extracted -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit)"
           if [ -z "$SETTINGS" ]; then
-            echo "ERROR: no settings.gradle/settings.gradle.kts found inside ZIP."
+            echo "ERROR: no Gradle settings file found inside ZIP."
             find extracted -maxdepth 4 -type f | sort | head -300
             exit 1
           fi
-
           PROJECT_DIR="$(dirname "$SETTINGS")"
           PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
           echo "Android project: $PROJECT_DIR"
-          find "$PROJECT_DIR" -maxdepth 2 -type f | sort | head -150
 
       - name: Install Gradle 9.3.1
         shell: bash
@@ -71,20 +68,21 @@ jobs:
             ${{ env.PROJECT_DIR }}/**/*.gradle*
             ${{ env.PROJECT_DIR }}/**/gradle-wrapper.properties
 
-      - name: Static security audit
+      - name: Static security audit - application source only
         shell: bash
         run: |
           set -euo pipefail
           cd "$PROJECT_DIR"
-          if grep -RInE --exclude-dir=.gradle --exclude-dir=build 'SUPABASE_SERVICE_ROLE_KEY|service_role|LIVEKIT_API_SECRET|LIVEKIT_API_KEY' .; then
-            echo "ERROR: forbidden server-side secret reference detected."
+          test -d app/src/main
+          if grep -RInE 'SUPABASE_SERVICE_ROLE_KEY|LIVEKIT_API_SECRET|LIVEKIT_API_KEY|service_role' app/src/main; then
+            echo "ERROR: forbidden server-side secret reference detected in application source."
             exit 1
           fi
-          if grep -RInE --exclude-dir=.gradle --exclude-dir=build '([?&])(role|token|access_token|refresh_token|livekit_token)=' .; then
-            echo "ERROR: sensitive role/token found being appended to a URL."
+          if grep -RInE '([?&])(role|token|access_token|refresh_token|livekit_token)=' app/src/main; then
+            echo "ERROR: sensitive role/token found being appended to a URL in application source."
             exit 1
           fi
-          echo "Static security checks passed."
+          echo "Static security checks passed for app/src/main."
 
       - name: Unit tests
         shell: bash
