@@ -25,11 +25,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
 
       - name: Extract Android project
         shell: bash
@@ -46,8 +45,18 @@ jobs:
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
           echo "Android project: $PROJECT_DIR"
 
-      - name: Gradle wrapper permissions
+      - name: Enable Gradle wrapper
         run: chmod +x "$PROJECT_DIR/gradlew"
+
+      - name: Gradle 17 configuration
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+          cache-dependency-path: |
+            ${{ env.PROJECT_DIR }}/**/*.gradle*
+            ${{ env.PROJECT_DIR }}/**/gradle-wrapper.properties
 
       - name: Static security audit
         shell: bash
@@ -100,8 +109,8 @@ jobs:
             CIADI-plus-debug.apk.sha256
           retention-days: 30
 
-      - name: Upload test reports
-        if: always()
+      - name: Upload audit reports
+        if: always() && env.PROJECT_DIR != ''
         uses: actions/upload-artifact@v4
         with:
           name: CIADI-plus-audit-report
