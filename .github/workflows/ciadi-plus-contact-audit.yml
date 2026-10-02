@@ -1,0 +1,44 @@
+name: CIADI+ - Auditoria contactos e alertas
+
+on:
+  push:
+    paths:
+      - 'ciadi+ (1).zip'
+      - '.github/workflows/ciadi-plus-contact-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-contacts-alerts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extrair projeto
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf extracted audit
+          mkdir -p extracted audit
+          unzip -q 'ciadi+ (1).zip' -d extracted
+          find extracted -type f \( -name '*.kt' -o -name '*.java' -o -name '*.xml' -o -name '*.json' \) -print > audit/files.txt
+      - name: Auditar contactos, alertas e intents
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo '# CIADI+ — auditoria de contactos/alertas'
+            echo
+            echo '## Ficheiros relacionados'
+            grep -Ei 'contact|contacto|contato|alert|alerta|notific|whatsapp|email|mail|destinat|recipient|receiver|share' audit/files.txt || true
+            echo
+            echo '## Ocorrencias no código'
+            grep -RniE 'contact|contacto|contato|alert|alerta|notific|whatsapp|email|mail|destinat|recipient|receiver|share' extracted --include='*.kt' --include='*.java' --include='*.xml' --include='*.json' | head -n 1000 || true
+          } > audit/contacts-alerts.md
+      - name: Publicar relatório
+        uses: actions/upload-artifact@v4
+        with:
+          name: CIADI-plus-contacts-alert-audit
+          path: audit/
+          retention-days: 7
