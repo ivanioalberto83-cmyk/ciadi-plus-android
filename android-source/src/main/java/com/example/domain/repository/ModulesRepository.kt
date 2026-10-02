@@ -12,6 +12,7 @@ import com.example.data.remote.dto.ChatMensagemDto
 import com.example.data.remote.dto.DocumentoClinicoDto
 import com.example.data.remote.dto.EfemerideDto
 import com.example.data.remote.dto.FormularioClinicoDto
+import com.example.ui.screens.forms.ClinicalFormSubmission
 import com.example.data.remote.dto.ModeloDocumentoDto
 import com.example.data.remote.dto.NotificacaoDto
 import com.example.data.remote.dto.PacienteDto
@@ -55,6 +56,7 @@ interface ModulesRepository {
 
     // 4. Formulários Clínicos
     fun observeFormulariosClinicos(): Flow<List<FormularioClinicoDto>>
+    suspend fun submeterFormularioClinico(submissao: ClinicalFormSubmission): Result<String>
 
     // 5. Documentos Clínicos & A4 & 11 Modelos Oficiais
     fun observeDocumentosClinicos(pacienteId: String? = null): Flow<List<DocumentoClinicoDto>>
