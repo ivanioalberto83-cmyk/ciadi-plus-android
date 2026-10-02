@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">CIADI+</string>
+    <string name="app_tagline">Centro Integrado de Apoio e Desenvolvimento Individual</string>
+    <string name="login_title">Bem-vindo ao CIADI+</string>
+    <string name="login_subtitle">Acesse o ecossistema integrado de suporte e acompanhamento terapêutico</string>
+    <string name="email_label">E-mail institucional ou cadastrado</string>
+    <string name="password_label">Senha de acesso</string>
+    <string name="forgot_password">Esqueceu a senha?</string>
+    <string name="btn_login">Entrar no CIADI+</string>
+    <string name="role_selector_title">Perfil de Acesso</string>
+    <string name="role_family">Família / Responsável</string>
+    <string name="role_at">Acompanhante Terapêutico (A.T.)</string>
+    <string name="role_professional">Profissional Especializado</string>
+    <string name="role_admin">Administração</string>
+    <string name="nav_dashboard">Início</string>
+    <string name="nav_agenda">Agenda</string>
+    <string name="nav_tracking">Acompanhamento</string>
+    <string name="nav_forms">Formulários</string>
+    <string name="nav_documents">Documentos</string>
+    <string name="nav_chat">Equipe &amp; Chat</string>
+    <string name="nav_notifications">Notificações</string>
+    <string name="supabase_status_ready">Backend Supabase preparado</string>
+    <string name="rls_notice">Políticas de segurança ativas (RLS)</string>
+</resources>
