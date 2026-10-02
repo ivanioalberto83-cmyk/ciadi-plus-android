@@ -210,6 +210,26 @@ fun FormsModuleScreen(
                 Spacer(modifier = Modifier.height(4.dp))
             }
 
+            item {
+                Text("Assistido selecionado", fontWeight = FontWeight.Bold, color = CIADIColors.Brown)
+                if (patients.isEmpty()) {
+                    Text("Nenhum assistido autorizado foi carregado.", color = CIADIColors.TextSecondary, fontSize = 12.sp)
+                } else {
+                    patients.forEach { patient ->
+                        Card(
+                            colors = CardDefaults.cardColors(containerColor = if (selectedPatient?.id == patient.id) Color(0xFFE2F4F7) else Color.White),
+                            modifier = Modifier.fillMaxWidth().clickable { selectedPatient = patient }
+                        ) {
+                            Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Column(Modifier.weight(1f)) { Text(patient.nome, fontWeight = FontWeight.Bold, color = CIADIColors.Brown) }
+                                Text(if (selectedPatient?.id == patient.id) "Selecionado" else "Selecionar", color = CIADIColors.OrangePrimary, fontSize = 12.sp)
+                            }
+                        }
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+            }
+
             items(formsList) { form ->
                 Card(
                     shape = RoundedCornerShape(14.dp),
