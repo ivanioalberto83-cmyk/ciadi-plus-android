@@ -121,9 +121,9 @@ fun FormsModuleScreen(
         )
 
         listOf(
-            baseAbcAba.copy(id = "${baseAbcAba.id}_abc", codigo = "ABC", nome = "Formulário ABC — Análise Funcional do Comportamento"),
-            baseAbcAba.copy(id = "${baseAbcAba.id}_aba", codigo = "ABA", nome = "Acompanhamento ABA — Registo de Sessão"),
-            baseAvaliacao.copy(id = "${baseAvaliacao.id}_diagnostico", codigo = "DIAGNOSTICO_AVALIACAO", nome = "Diagnóstico / Ficha de Avaliação — Neurodesenvolvimento")
+            baseAbcAba.copy(id = baseAbcAba.id, codigo = "ABC", nome = "Formulário ABC — Análise Funcional do Comportamento"),
+            baseAbcAba.copy(id = baseAbcAba.id, codigo = "ABA", nome = "Acompanhamento ABA — Registo de Sessão"),
+            baseAvaliacao.copy(id = baseAvaliacao.id, codigo = "DIAGNOSTICO_AVALIACAO", nome = "Diagnóstico / Ficha de Avaliação — Neurodesenvolvimento")
         )
     }
 
