@@ -38,17 +38,30 @@ jobs:
           rm -rf extracted
           mkdir -p extracted
           unzip -q 'ciadi+ (1).zip' -d extracted
-          GRADLEW="$(find extracted -type f -name gradlew -print -quit)"
-          test -n "$GRADLEW"
-          PROJECT_DIR="$(dirname "$GRADLEW")"
+
+          SETTINGS="$(find extracted -type f \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit)"
+          if [ -z "$SETTINGS" ]; then
+            echo "ERROR: no settings.gradle/settings.gradle.kts found inside ZIP."
+            find extracted -maxdepth 4 -type f | sort | head -300
+            exit 1
+          fi
+
+          PROJECT_DIR="$(dirname "$SETTINGS")"
           PROJECT_DIR="$(cd "$PROJECT_DIR" && pwd)"
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
           echo "Android project: $PROJECT_DIR"
+          find "$PROJECT_DIR" -maxdepth 2 -type f | sort | head -150
 
-      - name: Enable Gradle wrapper
-        run: chmod +x "$PROJECT_DIR/gradlew"
+      - name: Install Gradle 9.3.1
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSL https://services.gradle.org/distributions/gradle-9.3.1-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /opt
+          echo "/opt/gradle-9.3.1/bin" >> "$GITHUB_PATH"
+          gradle --version
 
-      - name: Gradle 17 configuration
+      - name: Gradle cache
         uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -78,14 +91,14 @@ jobs:
         run: |
           set -euo pipefail
           cd "$PROJECT_DIR"
-          ./gradlew test --no-daemon --stacktrace
+          gradle test --no-daemon --stacktrace
 
       - name: Build debug APK
         shell: bash
         run: |
           set -euo pipefail
           cd "$PROJECT_DIR"
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          gradle assembleDebug --no-daemon --stacktrace
 
       - name: Verify APK
         shell: bash
