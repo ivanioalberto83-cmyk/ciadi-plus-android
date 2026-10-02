@@ -103,6 +103,7 @@ fun SosScreen(
         }
     }
 
+    var tipoAlerta by remember { mutableStateOf("SOS") }
     var mensagemEmergencia by remember { mutableStateOf("Alerta de emergência acionado pelo responsável.") }
     var autorizarLocalizacao by remember { mutableStateOf(false) }
     var showConfirmDialog by remember { mutableStateOf(false) }
@@ -124,7 +125,7 @@ fun SosScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "SOS CIADI",
+                        text = if (tipoAlerta == "SOS") "SOS CIADI" else "Proteção CIADI — Bullying",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = CIADIColors.Brown
@@ -156,6 +157,13 @@ fun SosScreen(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    Button(modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = if (tipoAlerta == "SOS") CIADIColors.ErrorRed else Color.White, contentColor = if (tipoAlerta == "SOS") Color.White else CIADIColors.Brown), onClick = { tipoAlerta = "SOS" }) { Text("SOS") }
+                    OutlinedButton(modifier = Modifier.weight(1f), onClick = { tipoAlerta = "BULLYING" }) { Text("Bullying") }
+                }
+            }
+
             // 1. Banner Institucional de Alerta Seguro
             item {
                 Card(
@@ -316,7 +324,7 @@ fun SosScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Mensagem do Alerta (Opcional)",
+                            text = if (tipoAlerta == "SOS") "Mensagem do Alerta (Opcional)" else "Relato de Bullying / Proteção",
                             style = MaterialTheme.typography.titleSmall.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = CIADIColors.Brown
@@ -330,7 +338,7 @@ fun SosScreen(
                                 .fillMaxWidth()
                                 .testTag("sos_message_input"),
                             shape = RoundedCornerShape(10.dp),
-                            placeholder = { Text("Ex: Crise em ambiente escolar / necessidade de apoio emergencial") }
+                            placeholder = { Text(if (tipoAlerta == "SOS") "Ex: Crise em ambiente escolar / necessidade de apoio emergencial" else "Descreva o que aconteceu, onde e quando.") }
                         )
                     }
                 }
@@ -530,7 +538,7 @@ fun SosScreen(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "ACIONAR SOS CIADI+",
+                            text = if (tipoAlerta == "SOS") "ACIONAR SOS CIADI+" else "ENVIAR RELATO DE BULLYING",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -547,7 +555,7 @@ fun SosScreen(
             onDismissRequest = { showConfirmDialog = false },
             title = {
                 Text(
-                    text = "Enviar alerta SOS?",
+                    text = if (tipoAlerta == "SOS") "Enviar alerta SOS?" else "Enviar relato de bullying?",
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
                         color = CIADIColors.Brown
@@ -596,13 +604,12 @@ fun SosScreen(
                         }
 
                         coroutineScope.launch {
-                            val result = repoImpl?.enviarAlertaSos(
-                                pacienteId = pacienteId,
-                                mensagem = mensagemEmergencia,
-                                latitude = lat,
-                                longitude = lng,
-                                localizacaoAutorizada = autorizarLocalizacao
-                            )
+                            val result = if (tipoAlerta == "BULLYING") {
+                                val bullying = repoImpl?.registrarDenunciaBullying(selectedPatient?.id, "Relato de bullying / proteção", mensagemEmergencia)
+                                if (bullying?.isSuccess == true) Result.success(SosAlertaResultDto(pacienteId, true, "Relato de bullying registado para a equipa CIADI.", bullying.getOrNull())) else Result.failure(bullying?.exceptionOrNull() ?: Exception("Não foi possível registar o relato."))
+                            } else {
+                                repoImpl?.enviarAlertaSos(pacienteId, mensagemEmergencia, lat, lng, autorizarLocalizacao)
+                            }
 
                             isLoading = false
                             if (result != null && result.isSuccess) {
