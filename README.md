@@ -16,3 +16,5 @@ Build trigger: security audit correction.
 Build trigger: non-blocking security scan.
 
 Build trigger: stabilize security scan.
+
+Build trigger: continue after security audit.
