@@ -22,3 +22,5 @@ Build trigger: continue after security audit.
 Build trigger: continue APK build after test failure.
 
 Build trigger: debug assemble excludes lint/tests.
+
+Build trigger: map app module to src.
