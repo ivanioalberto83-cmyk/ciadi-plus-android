@@ -1,0 +1,1 @@
+Trigger de build Debug CIADI+ para validação do APK. Não inclui a Sala de Vídeo como entrega.
