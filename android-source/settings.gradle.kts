@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 rootProject.name = "CIADI+"
 
 include(":app")
+project(":app").projectDir = file("src")
