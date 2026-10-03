@@ -1,7 +1,5 @@
 package com.example.core.config
 
-import com.example.BuildConfig
-
 /**
  * Configuração central e oficial do Supabase para o ecossistema digital CIADI+.
  *
@@ -45,32 +43,10 @@ object SupabaseConfig {
     }
 
     val supabaseUrl: String
-        get() {
-            return try {
-                val candidate = BuildConfig.SUPABASE_URL
-                if (!candidate.isNullOrBlank() && !candidate.contains("placeholder", ignoreCase = true)) {
-                    normalizeUrl(candidate)
-                } else {
-                    SUPABASE_URL
-                }
-            } catch (_: Throwable) {
-                SUPABASE_URL
-            }
-        }
+        get() = SUPABASE_URL
 
     val supabasePublishableKey: String
-        get() {
-            return try {
-                val raw = BuildConfig.SUPABASE_ANON_KEY?.trim().orEmpty()
-                if (raw.isNotBlank() && !raw.contains("placeholder", ignoreCase = true)) {
-                    raw
-                } else {
-                    SUPABASE_PUBLISHABLE_KEY
-                }
-            } catch (_: Throwable) {
-                SUPABASE_PUBLISHABLE_KEY
-            }
-        }
+        get() = SUPABASE_PUBLISHABLE_KEY
 
     val supabaseAnonKey: String
         get() = supabasePublishableKey
