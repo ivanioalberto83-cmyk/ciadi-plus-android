@@ -443,7 +443,7 @@ fun SosScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = "Alerta SOS Transmitido!",
+                                    text = if (tipoAlerta == "SOS") "Alerta SOS transmitido!" else "Relato de bullying registado!",
                                     style = MaterialTheme.typography.titleSmall.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = CIADIColors.SuccessGreen
@@ -565,7 +565,10 @@ fun SosScreen(
             text = {
                 Column {
                     Text(
-                        text = "Este alerta será enviado à equipa responsável do CIADI para atendimento emergencial de:",
+                        text = if (tipoAlerta == "SOS")
+                            "Este alerta será enviado à equipa responsável do CIADI para atendimento emergencial de:"
+                        else
+                            "Este relato será enviado à equipa responsável do CIADI para acompanhamento de proteção de:",
                         style = MaterialTheme.typography.bodyMedium.copy(color = CIADIColors.TextPrimary)
                     )
                     Spacer(modifier = Modifier.height(6.dp))
@@ -612,16 +615,11 @@ fun SosScreen(
                             }
 
                             isLoading = false
-                            if (result != null && result.isSuccess) {
+                            if (result?.isSuccess == true) {
                                 resultadoSucesso = result.getOrNull()
                             } else {
-                                // Se o Supabase estiver em modo preview ou der erro
-                                resultadoSucesso = SosAlertaResultDto(
-                                    id = pacienteId,
-                                    sucesso = true,
-                                    mensagem = "Alerta transmitido com sucesso à equipe de prontidão do CIADI.",
-                                    protocolo = "SOS-${(System.currentTimeMillis() % 100000)}"
-                                )
+                                mensagemErro = result?.exceptionOrNull()?.message
+                                    ?: "Não foi possível enviar o alerta. Verifique a ligação ao CIADI e tente novamente."
                             }
                         }
                     },
@@ -632,7 +630,7 @@ fun SosScreen(
                     shape = RoundedCornerShape(10.dp),
                     modifier = Modifier.testTag("sos_confirm_button")
                 ) {
-                    Text("Enviar alerta", fontWeight = FontWeight.Bold)
+                    Text(if (tipoAlerta == "SOS") "Enviar alerta" else "Enviar relato", fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
