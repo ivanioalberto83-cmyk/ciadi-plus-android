@@ -201,7 +201,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: CIADI-plus-2.0.1-debug-apk
+          name: CIADI-plus-2.0.2-debug-apk
           path: |
             CIADI-plus-debug.apk
             CIADI-plus-debug.apk.sha256
