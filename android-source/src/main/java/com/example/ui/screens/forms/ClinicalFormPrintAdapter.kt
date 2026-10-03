@@ -6,6 +6,7 @@ import android.graphics.pdf.PdfDocument
 import android.print.PrintAttributes
 import android.print.PrintDocumentAdapter
 import android.print.PrintDocumentInfo
+import android.print.PageRange
 import android.os.CancellationSignal
 import android.os.ParcelFileDescriptor
 import java.io.FileOutputStream
@@ -34,7 +35,7 @@ class ClinicalFormPrintAdapter(
         callback.onLayoutFinished(
             PrintDocumentInfo.Builder("$title.pdf")
                 .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
-                .setPageCount(PdfDocument.PageInfo.UNDEFINED)
+                .setPageCount(PrintDocumentInfo.PAGE_COUNT_UNKNOWN)
                 .build(),
             true
         )
@@ -77,7 +78,7 @@ class ClinicalFormPrintAdapter(
             FileOutputStream(destination.fileDescriptor).use { output ->
                 pdf.writeTo(output)
             }
-            callback.onWriteFinished(arrayOf(PdfDocument.PageInfo.Builder(pageWidth, pageHeight, 1).create().let { PageRange.ALL_PAGES }))
+            callback.onWriteFinished(arrayOf(PageRange.ALL_PAGES))
         } catch (e: Exception) {
             callback.onWriteFailed(e.message)
         } finally {
