@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'ciadi+ (1).zip'
+      - 'android-source/**'
       - '.github/workflows/**'
       - 'README.md'
       - 'AGENTS.md'
@@ -214,7 +215,7 @@ jobs:
           cd "$PROJECT_DIR"
           rm -rf source-export
           mkdir -p source-export
-          cp -a app/src source-export/
+          cp -a src/main source-export/
           cp -a gradle source-export/ 2>/dev/null || true
           cp -a build.gradle* settings.gradle* gradle.properties source-export/ 2>/dev/null || true
           zip -qr "$GITHUB_WORKSPACE/CIADI-plus-source-audit.zip" source-export
