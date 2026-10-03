@@ -48,7 +48,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.core.config.SupabaseConfig
 import com.example.data.remote.dto.FormularioClinicoDto
 import com.example.data.remote.dto.PacienteDto
 import com.example.domain.model.Permission
@@ -163,7 +162,11 @@ fun FormsModuleScreen(
                             scope.launch {
                                 val result = modulesRepository?.submeterFormularioClinico(submission)
                                     ?: Result.failure(Exception("Módulo clínico não está ligado ao Supabase."))
-                                if (result.isSuccess) {
+                                if (!user.hasPermission(Permission.SUBMIT_CLINICAL_FORM)) {
+                                    snackbarHostState.showSnackbar("O perfil A.T. não possui autorização para submeter formulários clínicos.")
+                                } else if (activeFormToFill?.id?.startsWith("form_at_") == true) {
+                                    snackbarHostState.showSnackbar("Este formulário está em modo de contingência. Sincronize os formulários do CIADI antes de submeter.")
+                                } else if (result.isSuccess) {
                                     lastSubmission = submission
                                     snackbarHostState.showSnackbar("Formulário enviado e registado no prontuário CIADI.")
                                 } else {
@@ -206,7 +209,10 @@ fun FormsModuleScreen(
                     )
                 )
                 Text(
-                    text = "Formulários parametrizados e carregados dinamicamente do Supabase por especialidade.",
+                    text = if (user.hasPermission(Permission.SUBMIT_CLINICAL_FORM))
+                        "Formulários parametrizados do Supabase. O A.T. pode preencher, submeter, imprimir e partilhar os registos autorizados."
+                    else
+                        "O seu perfil pode consultar os formulários, mas não possui autorização para submeter.",
                     style = MaterialTheme.typography.bodySmall,
                     color = CIADIColors.TextSecondary
                 )
@@ -241,11 +247,13 @@ fun FormsModuleScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                            if (selectedPatient == null) {
-                                scope.launch { snackbarHostState.showSnackbar("Selecione primeiro o assistido.") }
-                            } else {
-                                activeFormToFill = form
-                                lastSubmission = null
+                            when {
+                                selectedPatient == null -> scope.launch { snackbarHostState.showSnackbar("Selecione primeiro o assistido.") }
+                                !user.hasPermission(Permission.SUBMIT_CLINICAL_FORM) -> scope.launch { snackbarHostState.showSnackbar("O seu perfil não está autorizado a preencher e submeter formulários clínicos.") }
+                                else -> {
+                                    activeFormToFill = form
+                                    lastSubmission = null
+                                }
                             }
                         }
                 ) {
