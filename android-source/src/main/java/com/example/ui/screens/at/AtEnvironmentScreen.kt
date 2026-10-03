@@ -481,6 +481,9 @@ fun AtEnvironmentScreen(
                         // Navega direto ou mostra mensagem
                         LaunchedEffect(Unit) { onNavigateToChat() }
                     }
+                    AtMenuSection.FORMULARIOS -> {
+                        onNavigateToForms()
+                    }
                 }
             }
         }
