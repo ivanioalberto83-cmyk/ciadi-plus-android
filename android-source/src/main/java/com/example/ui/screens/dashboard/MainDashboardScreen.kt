@@ -153,6 +153,7 @@ fun MainDashboardScreen(
             onNavigateToNotifications = { onNavigateToModule("notifications") },
             onNavigateToSos = onNavigateToSos,
             onNavigateToJaneth = onNavigateToJaneth,
+            onNavigateToForms = { onNavigateToModule("forms") },
             onSignOut = onNavigateToProfile,
             modifier = modifier
         )
