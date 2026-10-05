@@ -321,12 +321,59 @@ class SupabaseModulesRepositoryImpl(
 
     override suspend fun sincronizarContactos(): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val resp = clientFactory.restApi.getAtContactos()
-            if (resp.isSuccessful) {
-                _atContactos.value = resp.body().orEmpty()
+            // A view antiga v_ciadi_at_contactos depende de vínculos com assistidos
+            // e pode ficar vazia para profissionais recém-cadastrados. O Chat da Equipa
+            // precisa também descobrir os profissionais/AT ativos diretamente da tabela
+            // oficial profissionais, sem criar dados paralelos.
+            val contactosView = runCatching {
+                val resp = clientFactory.restApi.getAtContactos(
+                    select = "perfil_id,nome:nome_completo,funcao:contexto,categoria:tipo_contacto,assistido_relacionado:paciente_nome,avatar_url,telefone,email"
+                )
+                if (resp.isSuccessful) resp.body().orEmpty() else emptyList()
+            }.getOrElse {
+                Log.w("CIADI_CHAT", "Falha ao carregar contactos autorizados: ${it.message}")
+                emptyList()
             }
+
+            val currentUid = sessionManager.getCurrentUserId()
+            val profissionais = runCatching {
+                val resp = clientFactory.restApi.getProfissionais(
+                    select = "id,perfil_id,nome_completo,titulo,foto_url,email_profissional,telefone_profissional,ativo,eh_at",
+                    ativoFilter = "eq.true",
+                    order = "nome_completo.asc"
+                )
+                if (resp.isSuccessful) resp.body().orEmpty() else emptyList()
+            }.getOrElse {
+                Log.w("CIADI_CHAT", "Falha ao carregar profissionais do Chat: ${it.message}")
+                emptyList()
+            }
+
+            val contactosEquipa = profissionais
+                .filter { it.ativo && !it.perfilId.isNullOrBlank() && it.perfilId != currentUid }
+                .map { profissional ->
+                    AtContactoDto(
+                        perfilId = profissional.perfilId,
+                        nome = profissional.nomeCompleto,
+                        funcao = profissional.titulo?.takeIf { it.isNotBlank() }
+                            ?: if (profissional.ehAt) "Acompanhante Terapêutico" else "Profissional",
+                        categoria = if (profissional.ehAt) "A.T." else "Profissional",
+                        avatarUrl = profissional.fotoUrl,
+                        telefone = profissional.telefoneProfissional,
+                        email = profissional.emailProfissional
+                    )
+                }
+
+            _atContactos.value = (contactosView + contactosEquipa)
+                .filter { it.contactId.isNotBlank() }
+                .distinctBy { it.contactId }
+
+            Log.d(
+                "CIADI_CHAT",
+                "CHAT_CONTACTS_SYNC: ${_atContactos.value.size} contactos (${contactosEquipa.size} profissionais/AT ativos)"
+            )
             Result.success(Unit)
         } catch (e: Exception) {
+            Log.e("CIADI_CHAT", "Erro ao sincronizar contactos: ${e.message}", e)
             Result.failure(e)
         }
     }
