@@ -29,15 +29,15 @@ int main(int argc,char**argv){
   if(!fs::exists(ar/"src/test"))f.push_back({"MEDIUM","TESTS","Testes unitários ausentes."});
   if(!fs::exists(ar/"src/androidTest"))f.push_back({"MEDIUM","TESTS","Testes instrumentados ausentes."});
  }
- req(all,{"SUBMIT_CLINICAL_FORM"},"AT","SUBMIT_CLINICAL_FORM não encontrado.");
- req(all,{"ACOMPANHAMENTO_ABA_ABC",""ABC"",""ABA""},"AT_FORMS","Contrato ABC/ABA não encontrado.");
- req(all,{"DIAGNOSTICO_AVALIACAO","AVALIACAO_NEURODESENVOLVIMENTO"},"AT_FORMS","Diagnóstico/avaliação não encontrado.");
- req(all,{"ClinicalFormsRepository","submeterFormularioClinico"},"CLINICAL_FORMS","Fluxo de submissão clínica não encontrado.");
- req(all,{"ciadi_formularios_clinicos","documentos_clinicos"},"CLINICAL_DOCUMENTS","Tabelas/repositórios clínicos não encontrados.");
- req(all,{"ciadi_criar_alerta_sos","enviarAlertaSos"},"SOS","Fluxo SOS não encontrado.");
- req(all,{"registrarDenunciaBullying","Bullying"},"BULLYING","Fluxo Bullying não encontrado.");
- req(all,{"WhatsApp","ACTION_DIAL","mailto:"},"SOS_CONTACTS","Contacto SOS não encontrado.");
- req(all,{"CiadiDocumentA4View","ClinicalFormPrintAdapter"},"DOCUMENTS","Componentes A4/impressão não encontrados.");
+ req(all,{"SUBMIT_CLINICAL_FORM"},"AT","SUBMIT_CLINICAL_FORM não encontrado.",f);
+ req(all,{"ACOMPANHAMENTO_ABA_ABC",""ABC"",""ABA""},"AT_FORMS","Contrato ABC/ABA não encontrado.",f);
+ req(all,{"DIAGNOSTICO_AVALIACAO","AVALIACAO_NEURODESENVOLVIMENTO"},"AT_FORMS","Diagnóstico/avaliação não encontrado.",f);
+ req(all,{"ClinicalFormsRepository","submeterFormularioClinico"},"CLINICAL_FORMS","Fluxo de submissão clínica não encontrado.",f);
+ req(all,{"ciadi_formularios_clinicos","documentos_clinicos"},"CLINICAL_DOCUMENTS","Tabelas/repositórios clínicos não encontrados.",f);
+ req(all,{"ciadi_criar_alerta_sos","enviarAlertaSos"},"SOS","Fluxo SOS não encontrado.",f);
+ req(all,{"registrarDenunciaBullying","Bullying"},"BULLYING","Fluxo Bullying não encontrado.",f);
+ req(all,{"WhatsApp","ACTION_DIAL","mailto:"},"SOS_CONTACTS","Contacto SOS não encontrado.",f);
+ req(all,{"CiadiDocumentA4View","ClinicalFormPrintAdapter"},"DOCUMENTS","Componentes A4/impressão não encontrados.",f);
  auto pos=all.find("UserRole.AT"); if(pos==std::string::npos)pos=all.find("UserRole::AT");
  if(pos==std::string::npos)f.push_back({"HIGH","ROLES","UserRole AT não encontrado."}); else {auto end=all.find("UserRole.PROFISSIONAL",pos);if(end==std::string::npos)end=all.find("UserRole::PROFISSIONAL",pos);auto b=all.substr(pos,end==std::string::npos?6000:end-pos);if(b.find("SUBMIT_CLINICAL_FORM")==std::string::npos)f.push_back({"CRITICAL","ROLES","A.T. sem SUBMIT_CLINICAL_FORM."});}
  std::cout<<"CIADI UBUNTU/C++ AUDIT v2\nroot="<<root<<"\nfiles_scanned="<<files<<"\nsource_like_files="<<src<<"\nfindings="<<f.size()<<"\n";
