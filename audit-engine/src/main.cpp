@@ -20,8 +20,6 @@ static std::string read_file(const fs::path& p) {
     return std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
 }
 
-static void add(Finding& f, const std::string&, const std::string&) {}
-
 int main(int argc, char** argv) {
     fs::path root = argc > 1 ? fs::path(argv[1]) : fs::current_path();
     std::vector<Finding> findings;
@@ -70,19 +68,19 @@ int main(int argc, char** argv) {
         }
     }
 
-    const fs::path manifest = root / "android-source/src/main/AndroidManifest.xml";
+    const fs::path manifest = root / "app/src/main/AndroidManifest.xml";
     if (!fs::exists(manifest)) {
-        findings.push_back({"HIGH", "ANDROID", "AndroidManifest.xml not found at expected source path."});
+        findings.push_back({"WARNING", "ANDROID", "AndroidManifest.xml not found at standard app source path."});
     } else {
         const auto m = read_file(manifest);
-        if (m.find("android:usesCleartextTraffic="true"") != std::string::npos) {
+        if (m.find(R"(android:usesCleartextTraffic="true")") != std::string::npos) {
             findings.push_back({"HIGH", "TRANSPORT", "AndroidManifest enables cleartext traffic."});
         }
     }
 
-    const fs::path tests = root / "android-source/src/test";
+    const fs::path tests = root / "app/src/test";
     if (!fs::exists(tests)) {
-        findings.push_back({"WARNING", "TESTS", "Unit-test directory not found."});
+        findings.push_back({"WARNING", "TESTS", "Unit-test directory not found at standard app source path."});
     }
 
     std::cout << "CIADI UBUNTU/C++ AUDIT\n";
