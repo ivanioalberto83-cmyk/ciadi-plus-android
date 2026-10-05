@@ -321,3 +321,5 @@ private fun DocumentCardItem(
         }
     }
 }
+
+// Build trigger: validar emissão documental CIADI+ no APK Debug.
