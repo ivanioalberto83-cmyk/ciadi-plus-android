@@ -306,6 +306,7 @@ fun MainDashboardScreen(
                             proximaConsulta = proximaConsulta,
                             onNavigateToModule = onNavigateToModule,
                             onNavigateToVirtualClinic = onNavigateToVirtualClinic,
+                            onNavigateToSos = onNavigateToSos,
                             onNavigateToJaneth = onNavigateToJaneth
                         )
                     }
@@ -629,6 +630,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.profissionalDashboard
     proximaConsulta: PortalAgendamentoDto?,
     onNavigateToModule: (String) -> Unit,
     onNavigateToVirtualClinic: (PortalAgendamentoDto?) -> Unit,
+    onNavigateToSos: () -> Unit,
     onNavigateToJaneth: () -> Unit
 ) {
     item {
@@ -656,13 +658,13 @@ private fun androidx.compose.foundation.lazy.LazyListScope.profissionalDashboard
     }
 
     item {
-        Text(text = "Módulos Clínicos", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = CIADIColors.Brown))
+        Text(text = "Menu Clínico", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = CIADIColors.Brown))
     }
 
     item {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             BigAccessCard(
-                title = "Agenda Clínica",
+                title = "Minha Agenda",
                 subtitle = "Meus horários",
                 icon = Icons.Default.CalendarMonth,
                 iconColor = CIADIColors.OrangePrimary,
@@ -670,11 +672,11 @@ private fun androidx.compose.foundation.lazy.LazyListScope.profissionalDashboard
                 modifier = Modifier.weight(1f)
             )
             BigAccessCard(
-                title = "Pacientes & PEI",
-                subtitle = "Evolução e metas",
-                icon = Icons.Default.Timeline,
+                title = "Clínica Virtual",
+                subtitle = "Sala de vídeo",
+                icon = Icons.Default.Videocam,
                 iconColor = CIADIColors.TealPrimary,
-                onClick = { onNavigateToModule("tracking") },
+                onClick = { onNavigateToVirtualClinic(proximaConsulta) },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -683,11 +685,32 @@ private fun androidx.compose.foundation.lazy.LazyListScope.profissionalDashboard
     item {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             BigAccessCard(
+                title = "Pacientes & PEI",
+                subtitle = "Evolução e metas",
+                icon = Icons.Default.Timeline,
+                iconColor = CIADIColors.TealPrimary,
+                onClick = { onNavigateToModule("tracking") },
+                modifier = Modifier.weight(1f)
+            )
+            BigAccessCard(
                 title = "Formulários",
-                subtitle = "Evolução clínica",
+                subtitle = "Avaliações clínicas",
                 icon = Icons.Default.Assignment,
                 iconColor = CIADIColors.Brown,
                 onClick = { onNavigateToModule("forms") },
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+
+    item {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            BigAccessCard(
+                title = "Documentos Clínicos",
+                subtitle = "Relatórios e registos",
+                icon = Icons.Default.Folder,
+                iconColor = CIADIColors.Brown,
+                onClick = { onNavigateToModule("documents") },
                 modifier = Modifier.weight(1f)
             )
             BigAccessCard(
@@ -696,6 +719,27 @@ private fun androidx.compose.foundation.lazy.LazyListScope.profissionalDashboard
                 icon = Icons.Default.Groups,
                 iconColor = CIADIColors.RoleProfessional,
                 onClick = { onNavigateToModule("chat") },
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+
+    item {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            BigAccessCard(
+                title = "Notificações",
+                subtitle = "Alertas e pendências",
+                icon = Icons.Default.Notifications,
+                iconColor = CIADIColors.OrangePrimary,
+                onClick = { onNavigateToModule("notifications") },
+                modifier = Modifier.weight(1f)
+            )
+            BigAccessCard(
+                title = "SOS CIADI",
+                subtitle = "Alerta e assistência",
+                icon = Icons.Default.Warning,
+                iconColor = CIADIColors.ErrorRed,
+                onClick = onNavigateToSos,
                 modifier = Modifier.weight(1f)
             )
         }
