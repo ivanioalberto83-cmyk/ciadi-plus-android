@@ -30,7 +30,7 @@ int main(int argc,char**argv){
   if(!fs::exists(ar/"src/androidTest"))f.push_back({"MEDIUM","TESTS","Testes instrumentados ausentes."});
  }
  req(all,{"SUBMIT_CLINICAL_FORM"},"AT","SUBMIT_CLINICAL_FORM não encontrado.",f);
- req(all,{"ACOMPANHAMENTO_ABA_ABC",""ABC"",""ABA""},"AT_FORMS","Contrato ABC/ABA não encontrado.",f);
+ req(all,{"ACOMPANHAMENTO_ABA_ABC","ABC","ABA"},"AT_FORMS","Contrato ABC/ABA não encontrado.",f);
  req(all,{"DIAGNOSTICO_AVALIACAO","AVALIACAO_NEURODESENVOLVIMENTO"},"AT_FORMS","Diagnóstico/avaliação não encontrado.",f);
  req(all,{"ClinicalFormsRepository","submeterFormularioClinico"},"CLINICAL_FORMS","Fluxo de submissão clínica não encontrado.",f);
  req(all,{"ciadi_formularios_clinicos","documentos_clinicos"},"CLINICAL_DOCUMENTS","Tabelas/repositórios clínicos não encontrados.",f);
