@@ -156,7 +156,7 @@ interface SupabaseRestApi {
     suspend fun getFormulariosClinicos(
         @Query("select") select: String = "*",
         @Query("ativo") ativoFilter: String? = "eq.true",
-        @Query("order") order: String = "titulo.asc"
+        @Query("order") order: String = "nome.asc"
     ): Response<List<FormularioClinicoDto>>
 
     // --- 12.1 Avaliações clínicas preenchidas ---
@@ -194,6 +194,7 @@ interface SupabaseRestApi {
         @Query("order") order: String = "criado_em.desc"
     ): Response<List<DocumentoClinicoDto>>
 
+    @Headers("Prefer: return=representation")
     @POST("rest/v1/documentos_clinicos")
     suspend fun createDocumentoClinico(
         @Body documento: DocumentoClinicoDto
