@@ -5,97 +5,43 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-
 namespace fs = std::filesystem;
-
-struct Finding {
-    std::string severity;
-    std::string area;
-    std::string message;
-};
-
-static std::string read_file(const fs::path& p) {
-    std::ifstream in(p, std::ios::binary);
-    if (!in) return {};
-    return std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-}
-
-int main(int argc, char** argv) {
-    fs::path root = argc > 1 ? fs::path(argv[1]) : fs::current_path();
-    std::vector<Finding> findings;
-    std::size_t files = 0;
-    std::size_t source_files = 0;
-
-    if (!fs::exists(root)) {
-        std::cerr << "CIADI AUDIT ERROR: path does not exist: " << root << "\n";
-        return 2;
-    }
-
-    const std::regex secret_like(R"((service_role|anon[_-]?key|api[_-]?key|access[_-]?token|private[_-]?key))",
-                                 std::regex::icase);
-    const std::regex query_token(R"(([?&](token|access_token|jwt|authorization)=))",
-                                 std::regex::icase);
-    const std::regex dangerous_url(R"(http://)", std::regex::icase);
-
-    for (const auto& entry : fs::recursive_directory_iterator(root)) {
-        if (!entry.is_regular_file()) continue;
-        const auto p = entry.path();
-        const auto name = p.filename().string();
-        if (name == ".git" || p.string().find("/build/") != std::string::npos ||
-            p.string().find("\\build\\") != std::string::npos) continue;
-
-        ++files;
-        const auto ext = p.extension().string();
-        if (ext == ".kt" || ext == ".kts" || ext == ".java" || ext == ".xml" ||
-            ext == ".yml" || ext == ".yaml" || ext == ".gradle" || ext == ".md") {
-            ++source_files;
-        }
-
-        const auto content = read_file(p);
-        if (content.empty()) continue;
-
-        if (std::regex_search(content, secret_like)) {
-            findings.push_back({"WARNING", "SECRETS",
-                p.string() + ": possible credential/key identifier found; review manually."});
-        }
-        if (std::regex_search(content, query_token)) {
-            findings.push_back({"HIGH", "AUTH",
-                p.string() + ": token-like value appears in a URL query string; avoid insecure token transport."});
-        }
-        if (std::regex_search(content, dangerous_url)) {
-            findings.push_back({"WARNING", "TRANSPORT",
-                p.string() + ": HTTP URL detected; confirm it is not used for clinical/auth traffic."});
-        }
-    }
-
-    const fs::path manifest = root / "app/src/main/AndroidManifest.xml";
-    if (!fs::exists(manifest)) {
-        findings.push_back({"WARNING", "ANDROID", "AndroidManifest.xml not found at standard app source path."});
-    } else {
-        const auto m = read_file(manifest);
-        if (m.find(R"(android:usesCleartextTraffic="true")") != std::string::npos) {
-            findings.push_back({"HIGH", "TRANSPORT", "AndroidManifest enables cleartext traffic."});
-        }
-    }
-
-    const fs::path tests = root / "app/src/test";
-    if (!fs::exists(tests)) {
-        findings.push_back({"WARNING", "TESTS", "Unit-test directory not found at standard app source path."});
-    }
-
-    std::cout << "CIADI UBUNTU/C++ AUDIT\n";
-    std::cout << "root=" << root << "\n";
-    std::cout << "files_scanned=" << files << "\n";
-    std::cout << "source_like_files=" << source_files << "\n";
-    std::cout << "findings=" << findings.size() << "\n";
-
-    for (const auto& f : findings) {
-        std::cout << "[" << f.severity << "] " << f.area << " - " << f.message << "\n";
-    }
-
-    const bool blocking = std::any_of(findings.begin(), findings.end(),
-        [](const Finding& f){ return f.severity == "HIGH" || f.severity == "CRITICAL"; });
-
-    std::cout << "status=" << (blocking ? "REVIEW_REQUIRED" : "PASS_WITH_REVIEW") << "\n";
-    return blocking ? 1 : 0;
+struct Finding { std::string severity, area, message; };
+static std::string read_file(const fs::path& p){ std::ifstream in(p,std::ios::binary); if(!in)return{}; return {std::istreambuf_iterator<char>(in),std::istreambuf_iterator<char>()}; }
+static bool source_like(const fs::path& p){ auto e=p.extension().string(); return e==".kt"||e==".kts"||e==".java"||e==".xml"||e==".yml"||e==".yaml"||e==".gradle"||e==".md"||e==".json"||e==".toml"||e==".properties"||e==".cpp"||e==".h"||e==".hpp"; }
+static bool has(const std::string&s,const std::vector<std::string>& ns){for(const auto&n:ns)if(s.find(n)!=std::string::npos)return true;return false;}
+static void req(const std::string&a,const std::vector<std::string>&n,const std::string&area,const std::string&msg,std::vector<Finding>&f){if(!has(a,n))f.push_back({"HIGH",area,msg});}
+int main(int argc,char**argv){
+ fs::path root=argc>1?fs::path(argv[1]):fs::current_path(); std::vector<Finding> f; size_t files=0,src=0; std::string all;
+ if(!fs::exists(root)){std::cerr<<"CIADI AUDIT ERROR: path does not exist: "<<root<<"\n";return 2;}
+ fs::path ar=root/"android-source"; if(!fs::exists(ar))f.push_back({"HIGH","ANDROID","Diretório android-source não encontrado."});
+ for(const auto&e:fs::recursive_directory_iterator(root)){
+  if(!e.is_regular_file())continue; auto p=e.path(); auto ps=p.string();
+  if(ps.find("/.git/")!=std::string::npos||ps.find("\\.git\\")!=std::string::npos||ps.find("/build/")!=std::string::npos||ps.find("\\build\\")!=std::string::npos)continue;
+  ++files; if(!source_like(p))continue; ++src; auto c=read_file(p); if(c.empty())continue; all+="\n"+c;
+  if(std::regex_search(c,std::regex(R"(([?&](token|access_token|jwt|authorization)=))",std::regex::icase)))f.push_back({"HIGH","AUTH",ps+": token/JWT em URL query."});
+  if(std::regex_search(c,std::regex(R"(android:usesCleartextTraffic\s*=\s*"true")",std::regex::icase)))f.push_back({"HIGH","TRANSPORT",ps+": cleartext traffic ativo."});
+  if(std::regex_search(c,std::regex(R"(service_role\s*[:=])",std::regex::icase)))f.push_back({"CRITICAL","SECRETS",ps+": possível service_role atribuído."});
+  if(std::regex_search(c,std::regex(R"(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----)")))f.push_back({"CRITICAL","SECRETS",ps+": chave privada detectada."});
+ }
+ if(!ar.empty()){
+  if(!fs::exists(ar/"src/main/AndroidManifest.xml"))f.push_back({"HIGH","ANDROID","AndroidManifest.xml não encontrado no módulo real."});
+  if(!fs::exists(ar/"src/test"))f.push_back({"MEDIUM","TESTS","Testes unitários ausentes."});
+  if(!fs::exists(ar/"src/androidTest"))f.push_back({"MEDIUM","TESTS","Testes instrumentados ausentes."});
+ }
+ req(all,{"SUBMIT_CLINICAL_FORM"},"AT","SUBMIT_CLINICAL_FORM não encontrado.");
+ req(all,{"ACOMPANHAMENTO_ABA_ABC",""ABC"",""ABA""},"AT_FORMS","Contrato ABC/ABA não encontrado.");
+ req(all,{"DIAGNOSTICO_AVALIACAO","AVALIACAO_NEURODESENVOLVIMENTO"},"AT_FORMS","Diagnóstico/avaliação não encontrado.");
+ req(all,{"ClinicalFormsRepository","submeterFormularioClinico"},"CLINICAL_FORMS","Fluxo de submissão clínica não encontrado.");
+ req(all,{"ciadi_formularios_clinicos","documentos_clinicos"},"CLINICAL_DOCUMENTS","Tabelas/repositórios clínicos não encontrados.");
+ req(all,{"ciadi_criar_alerta_sos","enviarAlertaSos"},"SOS","Fluxo SOS não encontrado.");
+ req(all,{"registrarDenunciaBullying","Bullying"},"BULLYING","Fluxo Bullying não encontrado.");
+ req(all,{"WhatsApp","ACTION_DIAL","mailto:"},"SOS_CONTACTS","Contacto SOS não encontrado.");
+ req(all,{"CiadiDocumentA4View","ClinicalFormPrintAdapter"},"DOCUMENTS","Componentes A4/impressão não encontrados.");
+ auto pos=all.find("UserRole.AT"); if(pos==std::string::npos)pos=all.find("UserRole::AT");
+ if(pos==std::string::npos)f.push_back({"HIGH","ROLES","UserRole AT não encontrado."}); else {auto end=all.find("UserRole.PROFISSIONAL",pos);if(end==std::string::npos)end=all.find("UserRole::PROFISSIONAL",pos);auto b=all.substr(pos,end==std::string::npos?6000:end-pos);if(b.find("SUBMIT_CLINICAL_FORM")==std::string::npos)f.push_back({"CRITICAL","ROLES","A.T. sem SUBMIT_CLINICAL_FORM."});}
+ std::cout<<"CIADI UBUNTU/C++ AUDIT v2\nroot="<<root<<"\nfiles_scanned="<<files<<"\nsource_like_files="<<src<<"\nfindings="<<f.size()<<"\n";
+ for(const auto&x:f)std::cout<<"["<<x.severity<<"] "<<x.area<<" - "<<x.message<<"\n";
+ bool block=std::any_of(f.begin(),f.end(),[](const Finding&x){return x.severity=="HIGH"||x.severity=="CRITICAL";});
+ std::cout<<"status="<<(block?"REVIEW_REQUIRED":"PASS_WITH_REVIEW")<<"\n"; return block?1:0;
 }
