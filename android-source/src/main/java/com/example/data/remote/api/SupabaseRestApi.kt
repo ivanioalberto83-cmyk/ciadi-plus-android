@@ -154,7 +154,7 @@ interface SupabaseRestApi {
     // --- 12. Formulários Clínicos (tabela: ciadi_formularios_clinicos) ---
     @GET("rest/v1/ciadi_formularios_clinicos")
     suspend fun getFormulariosClinicos(
-        @Query("select") select: String = "id,codigo,nome,area_atuacao,tipo_formulario,descricao,instrucoes,versao,schema_json::text,regras_json::text,modelo_documento_id,ativo,publicado,atualizado_em",
+        @Query("select") select: String = "*",
         @Query("ativo") ativoFilter: String? = "eq.true",
         @Query("order") order: String = "nome.asc"
     ): Response<List<FormularioClinicoDto>>
