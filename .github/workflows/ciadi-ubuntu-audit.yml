@@ -33,3 +33,4 @@ jobs:
           echo "- Runner: Ubuntu 24.04" >> "$GITHUB_STEP_SUMMARY"
           echo "- Engine: C++17" >> "$GITHUB_STEP_SUMMARY"
           echo "- Scope: source tree / Android configuration" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Build target: fixed C++17 escape handling" >> "$GITHUB_STEP_SUMMARY"
