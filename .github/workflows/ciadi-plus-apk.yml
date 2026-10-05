@@ -1,8 +1,8 @@
-name: CIADI+ - Audit e APK
+name: Build CIADI+
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, feature/professional-menu-clinica-virtual ]
     paths:
       - 'ciadi+ (1).zip'
       - 'android-source/**'

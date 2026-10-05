@@ -7,6 +7,7 @@ import android.print.PrintAttributes
 import android.print.PrintManager
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -82,51 +83,29 @@ fun FormsModuleScreen(
         ?.collectAsState(initial = emptyList())
         ?: remember { mutableStateOf(emptyList<FormularioClinicoDto>()) })
 
-    val formsList = remember(rawForms) {
-        val abcAba = rawForms.firstOrNull { it.codigo == "ACOMPANHAMENTO_ABA_ABC" }
-        val avaliacao = rawForms.firstOrNull { it.codigo == "AVALIACAO_NEURODESENVOLVIMENTO" }
+    var selectedSpecialty by remember(user.specialty, rawForms) {
+        mutableStateOf(
+            user.specialty?.takeIf { specialty ->
+                rawForms.any { it.areaAtuacao?.equals(specialty, ignoreCase = true) == true }
+            } ?: "Todas"
+        )
+    }
 
-        val baseAbcAba = abcAba ?: FormularioClinicoDto(
-            id = "form_at_aba_abc",
-            codigo = "ACOMPANHAMENTO_ABA_ABC",
-            nome = "Registo de Acompanhamento ABA — ABC CIADI",
-            areaAtuacao = "ABA / Intervenção Comportamental",
-            tipoFormulario = "evolucao",
-            descricao = "Registo ABC e acompanhamento ABA.",
-            schemaJson = """{"fields":[
-                {"key":"atividade","label":"Atividade / contexto","type":"text","required":true},
-                {"key":"objetivo","label":"Objetivo da sessão","type":"textarea","required":true},
-                {"key":"antecedente","label":"A — Antecedente","type":"textarea","required":true},
-                {"key":"comportamento_observavel","label":"B — Comportamento observável","type":"textarea","required":true},
-                {"key":"consequencia","label":"C — Consequência / resposta","type":"textarea","required":true},
-                {"key":"estrategia","label":"Estratégia utilizada","type":"textarea","required":true},
-                {"key":"resposta","label":"Resposta observada","type":"textarea","required":true},
-                {"key":"proximo_passo","label":"Próximo passo","type":"textarea"}
-            ]}"""
-        )
-        val baseAvaliacao = avaliacao ?: FormularioClinicoDto(
-            id = "form_at_avaliacao",
-            codigo = "AVALIACAO_NEURODESENVOLVIMENTO",
-            nome = "Ficha de Avaliação / Diagnóstico — Neurodesenvolvimento CIADI",
-            areaAtuacao = "Neurodesenvolvimento",
-            tipoFormulario = "avaliacao",
-            descricao = "Ficha de avaliação clínica de neurodesenvolvimento.",
-            schemaJson = """{"fields":[
-                {"key":"historia_desenvolvimento","label":"História do desenvolvimento","type":"textarea","required":true},
-                {"key":"comunicacao","label":"Comunicação","type":"textarea","required":true},
-                {"key":"interacao_social","label":"Interação social","type":"textarea"},
-                {"key":"comportamento","label":"Comportamentos observados","type":"textarea"},
-                {"key":"autonomia","label":"Autonomia","type":"textarea"},
-                {"key":"necessidades","label":"Necessidades identificadas","type":"textarea","required":true},
-                {"key":"encaminhamentos","label":"Encaminhamentos / recomendações","type":"textarea","required":true}
-            ]}"""
-        )
+    val specialtyOptions = remember(rawForms) {
+        listOf("Todas") + rawForms
+            .mapNotNull { it.areaAtuacao?.trim()?.takeIf(String::isNotBlank) }
+            .distinctBy { it.lowercase() }
+            .sorted()
+    }
 
-        listOf(
-            baseAbcAba.copy(id = baseAbcAba.id, codigo = "ABC", nome = "Formulário ABC — Análise Funcional do Comportamento"),
-            baseAbcAba.copy(id = baseAbcAba.id, codigo = "ABA", nome = "Acompanhamento ABA — Registo de Sessão"),
-            baseAvaliacao.copy(id = baseAvaliacao.id, codigo = "DIAGNOSTICO_AVALIACAO", nome = "Diagnóstico / Ficha de Avaliação — Neurodesenvolvimento")
-        )
+    val formsList = remember(rawForms, selectedSpecialty) {
+        rawForms
+            .filter { it.ativo != false }
+            .filter {
+                selectedSpecialty == "Todas" ||
+                    it.areaAtuacao?.equals(selectedSpecialty, ignoreCase = true) == true
+            }
+            .sortedWith(compareBy({ it.areaAtuacao ?: "" }, { it.nome }))
     }
 
     if (activeFormToFill != null) {
@@ -220,6 +199,30 @@ fun FormsModuleScreen(
             }
 
             item {
+                Text(
+                    text = "Especialidade",
+                    fontWeight = FontWeight.Bold,
+                    color = CIADIColors.Brown
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(androidx.compose.foundation.rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    specialtyOptions.forEach { specialty ->
+                        androidx.compose.material3.FilterChip(
+                            selected = selectedSpecialty.equals(specialty, ignoreCase = true),
+                            onClick = { selectedSpecialty = specialty },
+                            label = { Text(specialty, fontSize = 12.sp) }
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            item {
                 Text("Assistido selecionado", fontWeight = FontWeight.Bold, color = CIADIColors.Brown)
                 if (patients.isEmpty()) {
                     Text("Nenhum assistido autorizado foi carregado.", color = CIADIColors.TextSecondary, fontSize = 12.sp)
@@ -237,6 +240,18 @@ fun FormsModuleScreen(
                     }
                 }
                 Spacer(Modifier.height(8.dp))
+            }
+
+            if (formsList.isEmpty()) {
+                item {
+                    EmptyModuleState(
+                        title = "Nenhum formulário disponível",
+                        description = if (selectedSpecialty == "Todas")
+                            "Não existem formulários clínicos ativos autorizados para este perfil."
+                        else
+                            "Não existem formulários clínicos ativos para $selectedSpecialty neste momento."
+                    )
+                }
             }
 
             items(formsList) { form ->
