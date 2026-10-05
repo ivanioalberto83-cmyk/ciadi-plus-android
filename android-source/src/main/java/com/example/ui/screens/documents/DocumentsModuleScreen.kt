@@ -24,6 +24,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -57,6 +60,7 @@ import com.example.ui.components.CiadiTopBar
 import com.example.ui.components.EmptyModuleState
 import com.example.ui.theme.CIADIColors
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 @Composable
 fun DocumentsModuleScreen(
@@ -70,6 +74,11 @@ fun DocumentsModuleScreen(
     val scope = rememberCoroutineScope()
 
     var selectedDocument by remember { mutableStateOf<DocumentoClinicoDto?>(null) }
+    var showEmissionDialog by remember { mutableStateOf(false) }
+    var documentTitle by remember { mutableStateOf("") }
+    var documentType by remember { mutableStateOf("RELATORIO") }
+    var documentContent by remember { mutableStateOf("") }
+    var isEmitting by remember { mutableStateOf(false) }
 
     val rawDocs by (modulesRepository?.observeDocumentosClinicos()
         ?.collectAsState(initial = emptyList())
@@ -96,6 +105,52 @@ fun DocumentsModuleScreen(
     }
 
     val canUpload = user.hasPermission(Permission.MANAGE_DOCUMENTS)
+
+    if (showEmissionDialog) {
+        AlertDialog(
+            onDismissRequest = { if (!isEmitting) showEmissionDialog = false },
+            title = { Text("Emitir documento clínico") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Assistido: " + (user.activePatientName ?: "Não identificado"))
+                    OutlinedTextField(documentTitle, { documentTitle = it }, label = { Text("Título") }, enabled = !isEmitting, singleLine = true)
+                    OutlinedTextField(documentType, { documentType = it.uppercase() }, label = { Text("Tipo: RELATORIO / LAUDO / PEI") }, enabled = !isEmitting, singleLine = true)
+                    OutlinedTextField(documentContent, { documentContent = it }, label = { Text("Conteúdo clínico") }, enabled = !isEmitting, minLines = 5)
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = !isEmitting && modulesRepository != null && user.activePatientId != null && documentTitle.isNotBlank() && documentContent.isNotBlank(), onClick = {
+                    val repo = modulesRepository ?: return@TextButton
+                    val pacienteId = user.activePatientId ?: return@TextButton
+                    isEmitting = true
+                    scope.launch {
+                        val result = repo.emitirDocumentoClinico(DocumentoClinicoDto(
+                            id = UUID.randomUUID().toString(),
+                            pacienteId = pacienteId,
+                            profissionalId = null,
+                            pacienteNome = user.activePatientName,
+                            profissionalNome = user.fullName,
+                            especialidadeNome = user.specialty,
+                            titulo = documentTitle.trim(),
+                            tipoDocumento = documentType.trim().ifBlank { "RELATORIO" },
+                            conteudoTexto = documentContent.trim(),
+                            estado = "PUBLICADO"
+                        ))
+                        isEmitting = false
+                        if (result.isSuccess) {
+                            showEmissionDialog = false
+                            documentTitle = ""
+                            documentContent = ""
+                            snackbarHostState.showSnackbar("Documento emitido e gravado no Supabase.")
+                        } else {
+                            snackbarHostState.showSnackbar(result.exceptionOrNull()?.message ?: "Falha ao emitir documento no Supabase.")
+                        }
+                    }
+                }) { Text(if (isEmitting) "A gravar..." else "Emitir") }
+            },
+            dismissButton = { TextButton(enabled = !isEmitting, onClick = { showEmissionDialog = false }) { Text("Cancelar") } }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -130,13 +185,14 @@ fun DocumentsModuleScreen(
                 },
                 primaryActionLabel = if (canUpload) "Emitir Relatório / Laudo" else "Solicitar Documento",
                 onPrimaryAction = {
-                    scope.launch {
-                        val msg = if (canUpload) {
-                            "Emissão de documentos clínicos integrada ao Supabase com controle de versões e assinatura."
+                    if (canUpload) {
+                        if (user.activePatientId == null) {
+                            scope.launch { snackbarHostState.showSnackbar("Selecione primeiro um assistido para emitir o documento.") }
                         } else {
-                            "Solicitação de documento encaminhada para a secretaria e coordenação do CIADI."
+                            showEmissionDialog = true
                         }
-                        snackbarHostState.showSnackbar(msg)
+                    } else {
+                        scope.launch { snackbarHostState.showSnackbar("Solicitação de documento encaminhada para a secretaria e coordenação do CIADI.") }
                     }
                 },
                 modifier = Modifier.padding(innerPadding)
