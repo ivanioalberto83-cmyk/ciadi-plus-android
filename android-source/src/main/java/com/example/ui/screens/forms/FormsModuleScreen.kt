@@ -245,11 +245,11 @@ fun FormsModuleScreen(
             if (formsList.isEmpty()) {
                 item {
                     EmptyModuleState(
-                        title = "Nenhum formulário disponível",
-                        description = if (selectedSpecialty == "Todas")
-                            "Não existem formulários clínicos ativos autorizados para este perfil."
-                        else
-                            "Não existem formulários clínicos ativos para $selectedSpecialty neste momento."
+                        icon = Icons.AutoMirrored.Filled.Assignment,
+                        moduleTitle = "Nenhum formulário disponível",
+                        targetTable = "ciadi_formularios_clinicos",
+                        requiredPermission = Permission.SUBMIT_CLINICAL_FORM,
+                        onRefresh = {}
                     )
                 }
             }
