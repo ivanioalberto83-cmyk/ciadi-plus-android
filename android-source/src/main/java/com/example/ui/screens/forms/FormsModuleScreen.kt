@@ -36,6 +36,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -74,6 +75,15 @@ fun FormsModuleScreen(
     var activeFormToFill by remember { mutableStateOf<FormularioClinicoDto?>(null) }
     var selectedPatient by remember { mutableStateOf<PacienteDto?>(null) }
     var lastSubmission by remember { mutableStateOf<ClinicalFormSubmission?>(null) }
+
+    LaunchedEffect(modulesRepository) {
+        val result = modulesRepository?.syncFormularios()
+        if (result != null && result.isFailure) {
+            snackbarHostState.showSnackbar(
+                result.exceptionOrNull()?.message ?: "Não foi possível sincronizar os formulários do CIADI."
+            )
+        }
+    }
 
     val patients by (modulesRepository?.observePacientes()
         ?.collectAsState(initial = emptyList())
