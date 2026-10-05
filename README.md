@@ -29,3 +29,6 @@ Build trigger: map app to src/main.
 
 
 Build trigger: APK workflow path correction.
+
+
+Build CIADI+ trigger: assembleDebug validation.
