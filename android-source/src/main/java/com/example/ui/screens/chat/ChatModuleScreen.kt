@@ -598,7 +598,7 @@ fun ChatModuleScreen(
                         .padding(horizontal = 20.dp, vertical = 12.dp)
                 ) {
                     Text(
-                        text = "Nova Conversa • Contactos Autorizados",
+                        text = "Nova Conversa • Equipa CIADI",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = CIADIColors.Brown,
@@ -607,7 +607,7 @@ fun ChatModuleScreen(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Carregados via v_ciadi_at_contactos por vínculos autorizados no Supabase.",
+                        text = "Profissionais e A.T. ativos sincronizados do Supabase oficial do CIADI.",
                         style = MaterialTheme.typography.bodySmall.copy(
                             color = CIADIColors.TextSecondary,
                             fontSize = 12.sp
@@ -642,7 +642,7 @@ fun ChatModuleScreen(
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    text = "Não existem contactos autorizados para esta conversa.",
+                                    text = "Não existem contactos da equipa disponíveis.",
                                     style = MaterialTheme.typography.bodyMedium.copy(
                                         color = CIADIColors.Brown,
                                         fontWeight = FontWeight.SemiBold
@@ -651,7 +651,7 @@ fun ChatModuleScreen(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "Apenas pessoas com vínculo autorizado ao assistido têm acesso.",
+                                    text = "Verifique se os profissionais e A.T. estão ativos no cadastro CIADI.",
                                     style = MaterialTheme.typography.bodySmall.copy(color = CIADIColors.TextSecondary),
                                     fontSize = 12.sp
                                 )
