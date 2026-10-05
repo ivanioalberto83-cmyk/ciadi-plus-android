@@ -16,7 +16,7 @@ int main(int argc,char**argv){
  if(!fs::exists(root)){std::cerr<<"CIADI AUDIT ERROR: path does not exist: "<<root<<"\n";return 2;}
  fs::path ar=root/"android-source"; if(!fs::exists(ar))f.push_back({"HIGH","ANDROID","Diretório android-source não encontrado."});
  for(const auto&e:fs::recursive_directory_iterator(root)){
-  if(!e.is_regular_file())continue; auto p=e.path(); auto ps=p.string();
+  if(!e.is_regular_file()) continue;\n  auto p=e.path();\n  auto ps=p.string();
   if(ps.find("/.git/")!=std::string::npos||ps.find("\\.git\\")!=std::string::npos||ps.find("/build/")!=std::string::npos||ps.find("\\build\\")!=std::string::npos)continue;
   ++files; if(!source_like(p))continue; ++src; auto c=read_file(p); if(c.empty())continue; all+="\n"+c;
   if(std::regex_search(c,std::regex(R"(([?&](token|access_token|jwt|authorization)=))",std::regex::icase)))f.push_back({"HIGH","AUTH",ps+": token/JWT em URL query."});
