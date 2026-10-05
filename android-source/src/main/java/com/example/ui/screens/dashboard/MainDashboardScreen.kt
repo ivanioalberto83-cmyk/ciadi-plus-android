@@ -288,6 +288,7 @@ fun MainDashboardScreen(
                             user = user,
                             adminStats = adminStats,
                             onNavigateToModule = onNavigateToModule,
+                            onNavigateToVirtualClinic = onNavigateToVirtualClinic,
                             onNavigateToJaneth = onNavigateToJaneth,
                             onNavigateToProfile = onNavigateToProfile,
                             onOpenPublicacoes = { showPublicacoesDialog = true }
@@ -412,6 +413,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.adminDashboardSection
     user: UserProfile,
     adminStats: com.example.domain.repository.AdminStatsState,
     onNavigateToModule: (String) -> Unit,
+    onNavigateToVirtualClinic: (PortalAgendamentoDto?) -> Unit,
     onNavigateToJaneth: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onOpenPublicacoes: () -> Unit
@@ -455,6 +457,14 @@ private fun androidx.compose.foundation.lazy.LazyListScope.adminDashboardSection
 
     item {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            BigAccessCard(
+                title = "Sala de Vídeo",
+                subtitle = "Clínica Virtual",
+                icon = Icons.Default.Videocam,
+                iconColor = CIADIColors.TealPrimary,
+                onClick = { onNavigateToVirtualClinic(proximaConsulta) },
+                modifier = Modifier.weight(1f)
+            )
             BigAccessCard(
                 title = "Agenda Geral",
                 subtitle = "Salas & Consultas",
