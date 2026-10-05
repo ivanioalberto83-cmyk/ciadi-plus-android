@@ -77,7 +77,7 @@ fun FormsModuleScreen(
     var lastSubmission by remember { mutableStateOf<ClinicalFormSubmission?>(null) }
 
     LaunchedEffect(modulesRepository) {
-        val result = modulesRepository?.syncFormularios()
+        val result = repoImpl?.syncFormularios()
         if (result != null && result.isFailure) {
             snackbarHostState.showSnackbar(
                 result.exceptionOrNull()?.message ?: "Não foi possível sincronizar os formulários do CIADI."
