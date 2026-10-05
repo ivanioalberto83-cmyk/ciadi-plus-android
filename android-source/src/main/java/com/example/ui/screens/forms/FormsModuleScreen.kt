@@ -51,6 +51,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.remote.dto.FormularioClinicoDto
+import com.example.data.repository.SupabaseModulesRepositoryImpl
 import com.example.data.remote.dto.PacienteDto
 import com.example.domain.model.Permission
 import com.example.domain.model.UserProfile
@@ -76,7 +77,9 @@ fun FormsModuleScreen(
     var selectedPatient by remember { mutableStateOf<PacienteDto?>(null) }
     var lastSubmission by remember { mutableStateOf<ClinicalFormSubmission?>(null) }
 
-    LaunchedEffect(modulesRepository) {
+    val repoImpl = modulesRepository as? SupabaseModulesRepositoryImpl
+
+    LaunchedEffect(repoImpl) {
         val result = repoImpl?.syncFormularios()
         if (result != null && result.isFailure) {
             snackbarHostState.showSnackbar(
