@@ -287,6 +287,7 @@ fun MainDashboardScreen(
                         adminDashboardSection(
                             user = user,
                             adminStats = adminStats,
+                            proximaConsulta = proximaConsulta,
                             onNavigateToModule = onNavigateToModule,
                             onNavigateToVirtualClinic = onNavigateToVirtualClinic,
                             onNavigateToJaneth = onNavigateToJaneth,
@@ -412,6 +413,7 @@ private fun DashboardHeaderCard(user: UserProfile) {
 private fun androidx.compose.foundation.lazy.LazyListScope.adminDashboardSection(
     user: UserProfile,
     adminStats: com.example.domain.repository.AdminStatsState,
+    proximaConsulta: PortalAgendamentoDto?,
     onNavigateToModule: (String) -> Unit,
     onNavigateToVirtualClinic: (PortalAgendamentoDto?) -> Unit,
     onNavigateToJaneth: () -> Unit,
