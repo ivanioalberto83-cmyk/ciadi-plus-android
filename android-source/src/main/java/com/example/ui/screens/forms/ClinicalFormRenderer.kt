@@ -237,7 +237,6 @@ private fun FormFieldItem(
 
 private fun parseSchemaFields(schemaJson: String?): List<DynamicFormField> {
     if (schemaJson.isNullOrBlank()) {
-        // Fallback para formulário padrão de evolução/anamnese clínica CIADI
         return listOf(
             DynamicFormField("observacoes_gerais", "Observações Clínicas Gerais", "textarea", required = true),
             DynamicFormField("nivel_engajamento", "Nível de Engajamento e Atenção Compartilhada", "radio", options = listOf("Excelente", "Bom", "Oscilante", "Resistente")),
@@ -248,30 +247,48 @@ private fun parseSchemaFields(schemaJson: String?): List<DynamicFormField> {
 
     return try {
         val root = JSONObject(schemaJson)
-        val fieldsArray = root.optJSONArray("fields") ?: JSONArray()
         val list = mutableListOf<DynamicFormField>()
-        for (i in 0 until fieldsArray.length()) {
-            val obj = fieldsArray.getJSONObject(i)
-            val key = obj.optString("key", "campo_$i")
-            val label = obj.optString("label", key)
-            val type = obj.optString("type", "text")
-            val required = obj.optBoolean("required", false)
-            val optionsJson = obj.optJSONArray("options")
-            val options = mutableListOf<String>()
-            if (optionsJson != null) {
-                for (j in 0 until optionsJson.length()) {
-                    options.add(optionsJson.getString(j))
+
+        fun appendFields(fieldsArray: JSONArray?) {
+            if (fieldsArray == null) return
+            for (i in 0 until fieldsArray.length()) {
+                val obj = fieldsArray.optJSONObject(i) ?: continue
+                val key = obj.optString("key", "campo_$i")
+                val label = obj.optString("label", key)
+                val type = obj.optString("type", "text")
+                val required = obj.optBoolean("required", false)
+                val optionsJson = obj.optJSONArray("options")
+                val options = mutableListOf<String>()
+                if (optionsJson != null) {
+                    for (j in 0 until optionsJson.length()) {
+                        options.add(optionsJson.optString(j))
+                    }
                 }
+                list.add(DynamicFormField(key, label, type, options, required))
             }
-            list.add(DynamicFormField(key, label, type, options, required))
         }
+
+        // Formato oficial CIADI: sections[].fields[]
+        val sections = root.optJSONArray("sections")
+        if (sections != null) {
+            for (i in 0 until sections.length()) {
+                val section = sections.optJSONObject(i) ?: continue
+                appendFields(section.optJSONArray("fields"))
+            }
+        }
+
+        // Compatibilidade com schemas antigos: fields[] na raiz
+        if (list.isEmpty()) {
+            appendFields(root.optJSONArray("fields"))
+        }
+
         if (list.isEmpty()) {
             listOf(
                 DynamicFormField("evolucao", "Registro de Evolução", "textarea", required = true),
                 DynamicFormField("conduta", "Conduta Terapêutica", "textarea")
             )
         } else list
-    } catch (e: Exception) {
+    } catch (_: Exception) {
         listOf(
             DynamicFormField("resumo_clinico", "Resumo do Atendimento", "textarea", required = true)
         )
