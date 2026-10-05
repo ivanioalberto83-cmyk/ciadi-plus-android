@@ -138,7 +138,17 @@ jobs:
           test -f debug.keystore
           ls -lh debug.keystore
 
-      - name: Build debug APK
+      - name: Configure and verify assembleDebug
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$PROJECT_DIR"
+          echo "Gradle project: $PROJECT_DIR"
+          gradle --version
+          echo "Available assembleDebug tasks:"
+          gradle tasks --all --no-daemon | grep -E '(^|:)assembleDebug([[:space:]]|$)' || true
+
+      - name: Build debug APK with assembleDebug
         shell: bash
         run: |
           set -euo pipefail
