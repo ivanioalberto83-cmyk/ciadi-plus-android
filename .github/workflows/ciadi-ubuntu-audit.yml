@@ -1,0 +1,35 @@
+name: CIADI - Ubuntu C++ Audit
+
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S audit-engine -B audit-engine/build
+
+      - name: Build
+        run: cmake --build audit-engine/build --parallel
+
+      - name: Run CIADI audit
+        run: ./audit-engine/build/ciadi-audit-engine .
+
+      - name: Publish audit summary
+        if: always()
+        run: |
+          echo "## CIADI Ubuntu/C++ Audit" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Runner: Ubuntu 24.04" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Engine: C++17" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Scope: source tree / Android configuration" >> "$GITHUB_STEP_SUMMARY"
