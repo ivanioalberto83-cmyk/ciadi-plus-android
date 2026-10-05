@@ -13,12 +13,16 @@ static bool has(const std::string&s,const std::vector<std::string>& ns){for(cons
 static void req(const std::string&a,const std::vector<std::string>&n,const std::string&area,const std::string&msg,std::vector<Finding>&f){if(!has(a,n))f.push_back({"HIGH",area,msg});}
 int main(int argc,char**argv){
  fs::path root=argc>1?fs::path(argv[1]):fs::current_path(); std::vector<Finding> f; size_t files=0,src=0; std::string all;
- if(!fs::exists(root)){std::cerr<<"CIADI AUDIT ERROR: path does not exist: "<<root<<"\n";return 2;}
+ if(!fs::exists(root)){std::cerr<<"CIADI AUDIT ERROR: path does not exist: "<<root<<"
+";return 2;}
  fs::path ar=root/"android-source"; if(!fs::exists(ar))f.push_back({"HIGH","ANDROID","Diretório android-source não encontrado."});
  for(const auto&e:fs::recursive_directory_iterator(root)){
-  if(!e.is_regular_file()) continue;\n  auto p=e.path();\n  auto ps=p.string();
+  if(!e.is_regular_file()) continue;
+  auto p=e.path();
+  auto ps=p.string();
   if(ps.find("/.git/")!=std::string::npos||ps.find("\\.git\\")!=std::string::npos||ps.find("/build/")!=std::string::npos||ps.find("\\build\\")!=std::string::npos)continue;
-  ++files; if(!source_like(p))continue; ++src; auto c=read_file(p); if(c.empty())continue; all+="\n"+c;
+  ++files; if(!source_like(p))continue; ++src; auto c=read_file(p); if(c.empty())continue; all+="
+"+c;
   if(std::regex_search(c,std::regex(R"(([?&](token|access_token|jwt|authorization)=))",std::regex::icase)))f.push_back({"HIGH","AUTH",ps+": token/JWT em URL query."});
   if(std::regex_search(c,std::regex(R"(android:usesCleartextTraffic\s*=\s*"true")",std::regex::icase)))f.push_back({"HIGH","TRANSPORT",ps+": cleartext traffic ativo."});
   if(std::regex_search(c,std::regex(R"(service_role\s*[:=])",std::regex::icase)))f.push_back({"CRITICAL","SECRETS",ps+": possível service_role atribuído."});
@@ -40,8 +44,15 @@ int main(int argc,char**argv){
  req(all,{"CiadiDocumentA4View","ClinicalFormPrintAdapter"},"DOCUMENTS","Componentes A4/impressão não encontrados.",f);
  auto pos=all.find("UserRole.AT"); if(pos==std::string::npos)pos=all.find("UserRole::AT");
  if(pos==std::string::npos)f.push_back({"HIGH","ROLES","UserRole AT não encontrado."}); else {auto end=all.find("UserRole.PROFISSIONAL",pos);if(end==std::string::npos)end=all.find("UserRole::PROFISSIONAL",pos);auto b=all.substr(pos,end==std::string::npos?6000:end-pos);if(b.find("SUBMIT_CLINICAL_FORM")==std::string::npos)f.push_back({"CRITICAL","ROLES","A.T. sem SUBMIT_CLINICAL_FORM."});}
- std::cout<<"CIADI UBUNTU/C++ AUDIT v2\nroot="<<root<<"\nfiles_scanned="<<files<<"\nsource_like_files="<<src<<"\nfindings="<<f.size()<<"\n";
- for(const auto&x:f)std::cout<<"["<<x.severity<<"] "<<x.area<<" - "<<x.message<<"\n";
+ std::cout<<"CIADI UBUNTU/C++ AUDIT v2
+root="<<root<<"
+files_scanned="<<files<<"
+source_like_files="<<src<<"
+findings="<<f.size()<<"
+";
+ for(const auto&x:f)std::cout<<"["<<x.severity<<"] "<<x.area<<" - "<<x.message<<"
+";
  bool block=std::any_of(f.begin(),f.end(),[](const Finding&x){return x.severity=="HIGH"||x.severity=="CRITICAL";});
- std::cout<<"status="<<(block?"REVIEW_REQUIRED":"PASS_WITH_REVIEW")<<"\n"; return block?1:0;
+ std::cout<<"status="<<(block?"REVIEW_REQUIRED":"PASS_WITH_REVIEW")<<"
+"; return block?1:0;
 }
