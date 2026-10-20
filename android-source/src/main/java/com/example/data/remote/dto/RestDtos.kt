@@ -201,13 +201,13 @@ data class FormularioClinicoDto(
     @param:Json(name = "tipo_formulario") val tipoFormulario: String? = null,
     @param:Json(name = "descricao") val descricao: String? = null,
     @param:Json(name = "instrucoes") val instrucoes: String? = null,
-    @param:Json(name = "versao") val versao: String? = "1.0",
-    @param:Json(name = "schema_json") val schemaJson: String? = null,
-    @param:Json(name = "regras_json") val regrasJson: String? = null,
+    @param:Json(name = "versao") val versao: Int? = 1,
+    @param:Json(name = "schema_json") val schemaJson: Any? = null,
+    @param:Json(name = "regras_json") val regrasJson: Any? = null,
     @param:Json(name = "modelo_documento_id") val modeloDocumentoId: String? = null,
     @param:Json(name = "ativo") val ativo: Boolean = true,
     @param:Json(name = "publicado") val publicado: Boolean = true,
-    @param:Json(name = "atualizado_em") val atualizadoEm: String? = null
+    @param:Json(name = "updated_at") val atualizadoEm: String? = null
 )
 
 // 13. Documento Clínico / Laudo / P.E.I. (tabela: documentos_clinicos)
