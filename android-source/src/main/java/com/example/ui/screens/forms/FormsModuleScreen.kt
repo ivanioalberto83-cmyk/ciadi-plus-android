@@ -152,17 +152,24 @@ fun FormsModuleScreen(
                         pacienteNome = selectedPatient?.nome ?: user.activePatientName ?: "Assistido",
                         onSubmit = { submission ->
                             scope.launch {
-                                val result = modulesRepository?.submeterFormularioClinico(submission)
-                                    ?: Result.failure(Exception("Módulo clínico não está ligado ao Supabase."))
-                                if (!user.hasPermission(Permission.SUBMIT_CLINICAL_FORM)) {
-                                    snackbarHostState.showSnackbar("O perfil A.T. não possui autorização para submeter formulários clínicos.")
-                                } else if (activeFormToFill?.id?.startsWith("form_at_") == true) {
-                                    snackbarHostState.showSnackbar("Este formulário está em modo de contingência. Sincronize os formulários do CIADI antes de submeter.")
-                                } else if (result.isSuccess) {
-                                    lastSubmission = submission
-                                    snackbarHostState.showSnackbar("Formulário enviado e registado no prontuário CIADI.")
-                                } else {
-                                    snackbarHostState.showSnackbar(result.exceptionOrNull()?.message ?: "Não foi possível enviar o formulário.")
+                                // Validar autorização e origem do formulário antes de qualquer escrita no Supabase.
+                                when {
+                                    !user.hasPermission(Permission.SUBMIT_CLINICAL_FORM) -> {
+                                        snackbarHostState.showSnackbar("O perfil A.T. não possui autorização para submeter formulários clínicos.")
+                                    }
+                                    activeFormToFill?.id?.startsWith("form_at_") == true -> {
+                                        snackbarHostState.showSnackbar("Este formulário está em modo de contingência. Sincronize os formulários do CIADI antes de submeter.")
+                                    }
+                                    else -> {
+                                        val result = modulesRepository?.submeterFormularioClinico(submission)
+                                            ?: Result.failure(Exception("Módulo clínico não está ligado ao Supabase."))
+                                        if (result.isSuccess) {
+                                            lastSubmission = submission
+                                            snackbarHostState.showSnackbar("Formulário enviado e registado no prontuário CIADI.")
+                                        } else {
+                                            snackbarHostState.showSnackbar(result.exceptionOrNull()?.message ?: "Não foi possível enviar o formulário.")
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -262,7 +269,22 @@ fun FormsModuleScreen(
                         moduleTitle = "Nenhum formulário disponível",
                         targetTable = "ciadi_formularios_clinicos",
                         requiredPermission = Permission.SUBMIT_CLINICAL_FORM,
-                        onRefresh = {}
+                        onRefresh = {
+                            scope.launch {
+                                val syncResult = repoImpl?.syncFormularios()
+                                if (syncResult == null) {
+                                    snackbarHostState.showSnackbar("Não foi possível ligar o módulo de formulários ao repositório CIADI.")
+                                } else if (syncResult.isFailure) {
+                                    snackbarHostState.showSnackbar(
+                                        syncResult.exceptionOrNull()?.message ?: "Falha ao sincronizar formulários."
+                                    )
+                                } else {
+                                    snackbarHostState.showSnackbar(
+                                        "Sincronização concluída. Se a lista continuar vazia, confirme formulários ativos e permissões RLS no Supabase."
+                                    )
+                                }
+                            }
+                        }
                     )
                 }
             }
