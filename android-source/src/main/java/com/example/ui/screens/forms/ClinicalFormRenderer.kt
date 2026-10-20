@@ -85,7 +85,7 @@ fun ClinicalFormRenderer(
 
             formulario.areaAtuacao?.let { area ->
                 Text(
-                    text = "Especialidade: $area (v${formulario.versao ?: "1.0"})",
+                    text = "Especialidade: $area (v${formulario.versao ?: 1})",
                     style = MaterialTheme.typography.labelSmall.copy(
                         color = CIADIColors.OrangePrimary,
                         fontWeight = FontWeight.SemiBold
@@ -235,18 +235,26 @@ private fun FormFieldItem(
     }
 }
 
-private fun parseSchemaFields(schemaJson: String?): List<DynamicFormField> {
-    if (schemaJson.isNullOrBlank()) {
-        return listOf(
-            DynamicFormField("observacoes_gerais", "Observações Clínicas Gerais", "textarea", required = true),
-            DynamicFormField("nivel_engajamento", "Nível de Engajamento e Atenção Compartilhada", "radio", options = listOf("Excelente", "Bom", "Oscilante", "Resistente")),
-            DynamicFormField("intervencao_realizada", "Intervenções e Estratégias Utilizadas", "textarea"),
-            DynamicFormField("meta_atingida", "Objetivo da Sessão Atingido", "checkbox")
-        )
+private fun parseSchemaFields(schemaJson: Any?): List<DynamicFormField> {
+    val fallbackFields = listOf(
+        DynamicFormField("observacoes_gerais", "Observações Clínicas Gerais", "textarea", required = true),
+        DynamicFormField("nivel_engajamento", "Nível de Engajamento e Atenção Compartilhada", "radio", options = listOf("Excelente", "Bom", "Oscilante", "Resistente")),
+        DynamicFormField("intervencao_realizada", "Intervenções e Estratégias Utilizadas", "textarea"),
+        DynamicFormField("meta_atingida", "Objetivo da Sessão Atingido", "checkbox")
+    )
+    if (schemaJson == null || (schemaJson is String && schemaJson.isBlank())) {
+        return fallbackFields
     }
 
     return try {
-        val root = JSONObject(schemaJson)
+        // PostgREST/Moshi entrega colunas JSONB como Map, não como String.
+        // Aceitar também String mantém compatibilidade com schemas antigos.
+        val schemaText = when (schemaJson) {
+            is String -> schemaJson
+            is Map<*, *> -> JSONObject(schemaJson).toString()
+            else -> return fallbackFields
+        }
+        val root = JSONObject(schemaText)
         val list = mutableListOf<DynamicFormField>()
 
         fun appendFields(fieldsArray: JSONArray?) {
