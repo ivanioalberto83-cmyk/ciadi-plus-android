@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: ciadi-plus-apk
+  group: ciadi-plus-apk-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -125,7 +125,7 @@ jobs:
         run: |
           set -euo pipefail
           cd "$PROJECT_DIR"
-          gradle test --no-daemon --stacktrace || echo "::warning::Unit tests failed; continuing to APK build for install validation."
+          timeout 180s gradle test --no-daemon --stacktrace || echo "::warning::Unit tests failed or exceeded 180 seconds; continuing to APK build for install validation."
 
       - name: Create CI debug keystore
         shell: bash
