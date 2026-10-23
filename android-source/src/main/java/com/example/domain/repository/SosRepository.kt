@@ -11,7 +11,7 @@ interface SosRepository {
         pacienteId: String?,
         titulo: String,
         descricao: String,
-        gravidade: String = "MEDIA"
+        gravidade: String = "normal"
     ): Result<String>
 
     suspend fun enviarAlertaSos(
