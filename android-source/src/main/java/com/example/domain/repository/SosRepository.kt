@@ -19,6 +19,9 @@ interface SosRepository {
         mensagem: String,
         latitude: Double?,
         longitude: Double?,
-        localizacaoAutorizada: Boolean
+        localizacaoAutorizada: Boolean,
+        tipoAlerta: String = "SOS",
+        categoria: String = "OUTRO",
+        nivelEmergencia: String = "URGENTE"
     ): Result<SosAlertaResultDto>
 }
