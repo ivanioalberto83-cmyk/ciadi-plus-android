@@ -610,8 +610,9 @@ fun SosScreen(
                         resultadoSucesso = null
                         mensagemErro = null
 
-                        val pacienteId = selectedPatient?.id
-                        if (pacienteId.isNullOrBlank() || authorizedPatients.none { it.id == pacienteId }) {
+                        val pacienteId = selectedPatient?.id?.takeIf { id ->
+                            authorizedPatients.any { it.id == id }
+                        } ?: run {
                             isLoading = false
                             mensagemErro = "Não foi possível confirmar o assistido autorizado. Selecione-o novamente e tente."
                             return@Button
