@@ -48,6 +48,11 @@ android {
   }
 
   packaging.resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+
+  // Robolectric precisa dos recursos Android e do Manifest real nos testes unitários.
+  testOptions {
+    unitTests.isIncludeAndroidResources = true
+  }
 }
 
 dependencies {
