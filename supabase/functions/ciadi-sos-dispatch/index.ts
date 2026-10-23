@@ -41,10 +41,9 @@ Deno.serve(async (req) => {
 
   // Only the person who created the alert or authorized CIADI management may dispatch it.
   const { data: actor } = await admin.from("perfis").select("nome_completo,nome_exibicao,tipo,ativo").eq("id", authData.user.id).maybeSingle();
-  if (alert.perfil_id !== authData.user.id) {
-    if (!actor?.ativo || !["admin", "gestor", "operador"].includes(actor.tipo)) {
-      return json({ error: "Sem autorização para encaminhar este alerta" }, 403);
-    }
+  if (!actor?.ativo) return json({ error: "Perfil CIADI inativo ou inexistente" }, 403);
+  if (alert.perfil_id !== authData.user.id && !["admin", "gestor", "operador"].includes(actor.tipo)) {
+    return json({ error: "Sem autorização para encaminhar este alerta" }, 403);
   }
   const { data: patient } = await admin.from("pacientes").select("nome_completo").eq("id", alert.paciente_id).maybeSingle();
   const patientName = patient?.nome_completo ?? "Assistido não identificado";
