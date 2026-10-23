@@ -96,10 +96,16 @@ fun SosScreen(
     val authorizedPatients by patientsFlow.collectAsState()
     var selectedPatient by remember { mutableStateOf<PacienteDto?>(null) }
 
-    // Atualiza seleção com base nas regras: se 1 criança, apresenta diretamente; se várias, usuário escolhe
+    // Mantém a seleção ligada apenas a um assistido que continua autorizado.
+    // Seleciona automaticamente quando existe exatamente um assistido autorizado.
     LaunchedEffect(authorizedPatients) {
-        if (authorizedPatients.size == 1 && selectedPatient == null) {
-            selectedPatient = authorizedPatients.first()
+        val currentId = selectedPatient?.id
+        selectedPatient = when {
+            authorizedPatients.isEmpty() -> null
+            currentId != null -> authorizedPatients.firstOrNull { it.id == currentId }
+                ?: if (authorizedPatients.size == 1) authorizedPatients.first() else null
+            authorizedPatients.size == 1 -> authorizedPatients.first()
+            else -> null
         }
     }
 
@@ -499,10 +505,18 @@ fun SosScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
                     onClick = {
-                        val targetPatient = selectedPatient ?: authorizedPatients.firstOrNull()
-                        if (targetPatient == null && user.activePatientName.isNullOrBlank()) {
-                            mensagemErro = "Por favor, selecione para quem é este alerta."
+                        // O nome de perfil não substitui o ID real do assistido.
+                        val targetPatient = selectedPatient
+                            ?: authorizedPatients.singleOrNull()
+                        if (targetPatient == null) {
+                            mensagemErro = if (authorizedPatients.isEmpty()) {
+                                "Não foi encontrado nenhum assistido autorizado. Atualize os vínculos no CIADI e tente novamente."
+                            } else {
+                                "Selecione o assistido para quem pretende enviar este alerta."
+                            }
+                            showConfirmDialog = false
                         } else {
+                            selectedPatient = targetPatient
                             mensagemErro = null
                             showConfirmDialog = true
                         }
@@ -596,7 +610,12 @@ fun SosScreen(
                         resultadoSucesso = null
                         mensagemErro = null
 
-                        val pacienteId = selectedPatient?.id ?: user.id
+                        val pacienteId = selectedPatient?.id
+                        if (pacienteId.isNullOrBlank() || authorizedPatients.none { it.id == pacienteId }) {
+                            isLoading = false
+                            mensagemErro = "Não foi possível confirmar o assistido autorizado. Selecione-o novamente e tente."
+                            return@Button
+                        }
                         var lat: Double? = null
                         var lng: Double? = null
 
