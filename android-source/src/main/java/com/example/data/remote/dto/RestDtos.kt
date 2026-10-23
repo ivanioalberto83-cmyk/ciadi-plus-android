@@ -577,11 +577,11 @@ data class BullyingDenunciaCreateDto(
     @param:Json(name = "paciente_id") val pacienteId: String?,
     @param:Json(name = "anonima") val anonima: Boolean = false,
     @param:Json(name = "codigo_acompanhamento") val codigoAcompanhamento: String,
-    @param:Json(name = "categoria") val categoria: String = "BULLYING",
-    @param:Json(name = "gravidade") val gravidade: String = "MEDIA",
+    @param:Json(name = "categoria") val categoria: String = "bullying",
+    @param:Json(name = "gravidade") val gravidade: String = "normal",
     @param:Json(name = "titulo") val titulo: String,
     @param:Json(name = "descricao") val descricao: String,
     @param:Json(name = "local_ocorrencia") val localOcorrencia: String? = null,
     @param:Json(name = "evidencias") val evidencias: Map<String, String?> = emptyMap(),
-    @param:Json(name = "estado") val estado: String = "ABERTA"
+    @param:Json(name = "estado") val estado: String = "recebida"
 )
