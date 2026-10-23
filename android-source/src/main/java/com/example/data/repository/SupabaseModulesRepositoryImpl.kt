@@ -618,7 +618,16 @@ class SupabaseModulesRepositoryImpl(
             val protocolo = rpcBody.optString("protocolo").takeIf { it.isNotBlank() }
             var whatsappStatus = rpcBody.optString("whatsapp_status", "pendente")
             var emailStatus = rpcBody.optString("email_status", "pendente")
-            var dispatchDetail = "O alerta foi registado; o encaminhamento externo ainda não foi confirmado."
+            fun estadoCanalLegivel(estado: String): String = when (estado) {
+                "aceite_provedor" -> "aceite pelo provedor; entrega ainda não confirmada"
+                "entregue" -> "entregue"
+                "lido" -> "lido"
+                "falhou" -> "falhou"
+                "nao_configurado" -> "não configurado"
+                "pendente" -> "pendente"
+                else -> estado
+            }
+            var dispatchDetail = "Alerta registado; o estado dos canais externos ainda não foi confirmado."
 
             // A criação do alerta e o envio externo são etapas distintas. Não declarar entrega sem resposta do provedor.
             try {
@@ -628,9 +637,9 @@ class SupabaseModulesRepositoryImpl(
                     val channels = dispatchBody.optJSONObject("canais")
                     whatsappStatus = channels?.optString("whatsapp", whatsappStatus) ?: whatsappStatus
                     emailStatus = channels?.optString("email", emailStatus) ?: emailStatus
-                    dispatchDetail = "Encaminhamento processado. WhatsApp: $whatsappStatus; e-mail: $emailStatus."
+                    dispatchDetail = "Encaminhamento processado. WhatsApp: ${estadoCanalLegivel(whatsappStatus)}; e-mail: ${estadoCanalLegivel(emailStatus)}."
                 } else {
-                    dispatchDetail = "Alerta registado, mas o envio externo não foi confirmado. WhatsApp: $whatsappStatus; e-mail: $emailStatus. Código de envio: ${dispatch.code()}."
+                    dispatchDetail = "Alerta registado, mas o envio externo não foi confirmado. WhatsApp: ${estadoCanalLegivel(whatsappStatus)}; e-mail: ${estadoCanalLegivel(emailStatus)}. Código de envio: ${dispatch.code()}."
                 }
             } catch (_: Exception) {
                 dispatchDetail = "Alerta registado no CIADI, mas não foi possível confirmar o envio por WhatsApp/e-mail. A equipa deve verificar o painel."
