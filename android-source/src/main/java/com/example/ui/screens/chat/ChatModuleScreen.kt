@@ -153,6 +153,7 @@ fun ChatModuleScreen(
     var showOptionsMenu by remember { mutableStateOf(false) }
     var showNewContactSheet by remember { mutableStateOf(false) }
     var contactSearchQuery by remember { mutableStateOf("") }
+    var isOpeningConversation by remember { mutableStateOf(false) }
 
     // Sincroniza dados iniciais do Supabase e seleciona grupo real ativo
     LaunchedEffect(gruposList) {
@@ -672,32 +673,51 @@ fun ChatModuleScreen(
                                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable {
-                                            val destId = contacto.contactId
-                                            scope.launch {
-                                                val res = repoImpl?.abrirConversaPrivada(
-                                                    destinatarioId = destId,
-                                                    pacienteId = contacto.pacienteId
-                                                )
-                                                if (res?.isSuccess == true) {
-                                                    val gid = res.getOrNull()
-                                                    if (!gid.isNullOrBlank()) {
-                                                        selectedGroup = ChatGrupoDto(
-                                                            id = gid,
-                                                            nome = "${contacto.contactName} (${contacto.contactRole})",
-                                                            tipo = "privado",
-                                                            pacienteNome = contacto.assistidoRelacionado
+                                        .clickable(enabled = !isOpeningConversation) {
+                                            // A RPC espera o ID do perfil autenticado, não o ID da linha da view.
+                                            val destId = contacto.destinatarioId?.takeIf { it.isNotBlank() }
+                                                ?: contacto.perfilId?.takeIf { it.isNotBlank() }
+                                            if (destId.isNullOrBlank()) {
+                                                scope.launch {
+                                                    snackbarHostState.showSnackbar(
+                                                        "Este contacto não tem um ID de perfil válido no Supabase. Atualize o cadastro/vínculo e tente novamente."
+                                                    )
+                                                }
+                                            } else {
+                                                isOpeningConversation = true
+                                                scope.launch {
+                                                    try {
+                                                        val res = repoImpl?.abrirConversaPrivada(
+                                                            destinatarioId = destId,
+                                                            pacienteId = contacto.pacienteId
                                                         )
-                                                        showNewContactSheet = false
-                                                        contactSearchQuery = ""
-                                                        snackbarHostState.showSnackbar("Canal seguro aberto com ${contacto.contactName}")
-                                                    } else {
-                                                        snackbarHostState.showSnackbar("Não foi possível obter o identificador da conversa no Supabase.")
+                                                        if (res?.isSuccess == true) {
+                                                            val gid = res.getOrNull()
+                                                            if (!gid.isNullOrBlank()) {
+                                                                selectedGroup = ChatGrupoDto(
+                                                                    id = gid,
+                                                                    nome = "${contacto.contactName} (${contacto.contactRole})",
+                                                                    tipo = "privado",
+                                                                    pacienteNome = contacto.assistidoRelacionado
+                                                                )
+                                                                showNewContactSheet = false
+                                                                contactSearchQuery = ""
+                                                                snackbarHostState.showSnackbar("Canal seguro aberto com ${contacto.contactName}")
+                                                            } else {
+                                                                snackbarHostState.showSnackbar("O Supabase não devolveu o ID da conversa. Tente novamente.")
+                                                            }
+                                                        } else {
+                                                            val err = res?.exceptionOrNull()?.message
+                                                                ?: "Não foi possível iniciar a conversa. Verifique a sessão e as permissões do chat."
+                                                            snackbarHostState.showSnackbar(err)
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        snackbarHostState.showSnackbar(
+                                                            e.message ?: "Falha inesperada ao iniciar a conversa."
+                                                        )
+                                                    } finally {
+                                                        isOpeningConversation = false
                                                     }
-                                                } else {
-                                                    val err = res?.exceptionOrNull()?.message
-                                                        ?: "Erro ao abrir conversa privada."
-                                                    snackbarHostState.showSnackbar(err)
                                                 }
                                             }
                                         }
