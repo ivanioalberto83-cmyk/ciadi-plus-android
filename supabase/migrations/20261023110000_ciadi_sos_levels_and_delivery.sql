@@ -30,7 +30,7 @@ create table if not exists public.ciadi_sos_entregas (
   canal text not null check (canal in ('whatsapp','email')),
   destinatario text not null,
   estado text not null default 'pendente'
-    check (estado in ('pendente','a_enviar','enviado','falhou','nao_configurado')),
+    check (estado in ('pendente','a_enviar','aceite_provedor','entregue','lido','falhou','nao_configurado')),
   tentativas integer not null default 0,
   id_provedor text,
   erro text,
@@ -48,6 +48,7 @@ create policy ciadi_sos_entregas_gestao_read
 
 revoke all on public.ciadi_sos_entregas from anon, authenticated;
 grant select on public.ciadi_sos_entregas to authenticated;
+grant all on public.ciadi_sos_entregas to service_role;
 
 create index if not exists idx_ciadi_sos_entregas_alerta_estado
   on public.ciadi_sos_entregas(alerta_id, estado);
