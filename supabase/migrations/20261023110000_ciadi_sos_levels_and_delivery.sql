@@ -279,6 +279,8 @@ as $function$
 $function$;
 
 revoke all on function public.ciadi_criar_alerta_sos_core(uuid,text,numeric,numeric,boolean,text,text,text) from public, anon, authenticated;
+revoke all on function public.ciadi_criar_alerta_sos(uuid,text,numeric,numeric,boolean) from public, anon;
+revoke all on function public.ciadi_criar_alerta_sos(uuid,text,numeric,numeric,boolean,text,text,text) from public, anon;
 grant execute on function public.ciadi_criar_alerta_sos(uuid,text,numeric,numeric,boolean) to authenticated;
 grant execute on function public.ciadi_criar_alerta_sos(uuid,text,numeric,numeric,boolean,text,text,text) to authenticated;
 
