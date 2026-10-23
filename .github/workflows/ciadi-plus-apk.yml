@@ -6,6 +6,7 @@ on:
     paths:
       - 'ciadi+ (1).zip'
       - 'android-source/**'
+      - 'scripts/**'
       - '.github/workflows/**'
       - 'README.md'
       - 'AGENTS.md'
