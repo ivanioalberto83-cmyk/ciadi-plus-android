@@ -2,7 +2,7 @@ name: Build CIADI+
 
 on:
   push:
-    branches: [ main, feature/professional-menu-clinica-virtual ]
+    branches: [ main, feature/professional-menu-clinica-virtual, feature/sos-android-contact-picker ]
     paths:
       - 'ciadi+ (1).zip'
       - 'android-source/**'
@@ -57,6 +57,13 @@ jobs:
           fi
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
           echo "Android project: $PROJECT_DIR"
+
+      - name: Apply privacy-preserving SOS contact picker
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/patch-sos-contacts.py "$PROJECT_DIR"
+          grep -nE 'sos_choose_contact|sos_share_whatsapp|sos_share_sms|PickContact' "$PROJECT_DIR/src/main/java/com/example/ui/screens/sos/SosScreen.kt"
 
       - name: Audit clinical forms source flow
         shell: bash
