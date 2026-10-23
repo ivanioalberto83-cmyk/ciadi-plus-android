@@ -600,8 +600,10 @@ class SupabaseModulesRepositoryImpl(
             val req = com.example.data.remote.dto.CriarAlertaSosRequest(
                 pacienteId = pacienteId,
                 mensagem = mensagem,
-                latitude = latitude,
-                longitude = longitude,
+                // O PostgREST precisa receber todos os argumentos da assinatura de 8 parâmetros.
+                // Quando a localização não existe, enviar 0/0 com autorização=false; a RPC descarta essas coordenadas.
+                latitude = latitude ?: 0.0,
+                longitude = longitude ?: 0.0,
                 localizacaoAutorizada = localizacaoAutorizada && latitude != null && longitude != null,
                 tipo = tipoAlerta,
                 categoria = categoria,
