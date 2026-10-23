@@ -90,6 +90,8 @@ async function verifyWhatsAppSignature(secret: string, header: string, body: str
 }
 
 async function verifyResendSignature(secret: string, id: string, timestamp: string, signatureHeader: string, body: string): Promise<boolean> {
+  const timestampSeconds = Number(timestamp);
+  if (!Number.isFinite(timestampSeconds) || Math.abs(Date.now() / 1000 - timestampSeconds) > 300) return false;
   const rawSecret = secret.startsWith("whsec_") ? secret.slice(6) : secret;
   let keyBytes: Uint8Array;
   try { keyBytes = Uint8Array.from(atob(rawSecret), (c) => c.charCodeAt(0)); }
@@ -97,7 +99,10 @@ async function verifyResendSignature(secret: string, id: string, timestamp: stri
   const key = await crypto.subtle.importKey("raw", keyBytes, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const signedContent = new TextEncoder().encode(`${id}.${timestamp}.${body}`);
   const signature = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.sign("HMAC", key, signedContent))));
-  const candidates = signatureHeader.split(" ").map((part) => part.split(",")).flat().filter((part) => part.startsWith("v1,")).map((part) => part.slice(3));
+  const candidates = signatureHeader.split(" ").map((part) => {
+    const [version, value] = part.split(",", 2);
+    return version === "v1" ? value : null;
+  }).filter((value): value is string => Boolean(value));
   return candidates.some((candidate) => constantTimeEqual(candidate, signature));
 }
 
