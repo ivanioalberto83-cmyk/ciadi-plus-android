@@ -241,9 +241,9 @@ class CiadiChatPersistenceRobolectricTest {
     }
 
     @Test
-    fun `test 6 - verificar 10 modulos obrigatorios do perfil AT`() {
+    fun `test 6 - verificar 11 modulos obrigatorios do perfil AT`() {
         val sections = AtMenuSection.values()
-        assertEquals(10, sections.size)
+        assertEquals(11, sections.size)
 
         val tags = sections.map { it.tag }
         assertTrue(tags.contains("menu_at_inicio"))
@@ -256,6 +256,7 @@ class CiadiChatPersistenceRobolectricTest {
         assertTrue(tags.contains("menu_at_organizacao"))
         assertTrue(tags.contains("menu_at_notificacoes"))
         assertTrue(tags.contains("menu_at_perfil"))
+        assertTrue(tags.contains("menu_at_formularios"))
     }
 
     @Test
