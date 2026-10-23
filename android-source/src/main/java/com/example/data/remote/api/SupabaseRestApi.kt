@@ -256,6 +256,11 @@ interface SupabaseRestApi {
         @Body request: com.example.data.remote.dto.CriarAlertaSosRequest
     ): Response<okhttp3.ResponseBody>
 
+    @POST("functions/v1/ciadi-sos-dispatch")
+    suspend fun encaminharAlertaSos(
+        @Body body: Map<String, String>
+    ): Response<okhttp3.ResponseBody>
+
     // --- 18. Agenda Autorizada do Portal (RPC: ciadi_portal_agendamentos_autorizados) ---
     @POST("rest/v1/rpc/ciadi_portal_agendamentos_autorizados")
     suspend fun getPortalAgendamentosAutorizados(

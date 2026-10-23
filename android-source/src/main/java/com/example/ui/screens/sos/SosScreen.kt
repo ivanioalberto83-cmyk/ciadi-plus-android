@@ -96,14 +96,38 @@ fun SosScreen(
     val authorizedPatients by patientsFlow.collectAsState()
     var selectedPatient by remember { mutableStateOf<PacienteDto?>(null) }
 
-    // Atualiza seleção com base nas regras: se 1 criança, apresenta diretamente; se várias, usuário escolhe
+    // Mantém a seleção ligada apenas a um assistido que continua autorizado.
+    // Seleciona automaticamente quando existe exatamente um assistido autorizado.
     LaunchedEffect(authorizedPatients) {
-        if (authorizedPatients.size == 1 && selectedPatient == null) {
-            selectedPatient = authorizedPatients.first()
+        val currentId = selectedPatient?.id
+        selectedPatient = when {
+            authorizedPatients.isEmpty() -> null
+            currentId != null -> authorizedPatients.firstOrNull { it.id == currentId }
+                ?: if (authorizedPatients.size == 1) authorizedPatients.first() else null
+            authorizedPatients.size == 1 -> authorizedPatients.first()
+            else -> null
         }
     }
 
     var tipoAlerta by remember { mutableStateOf("SOS") }
+    var categoriaAlerta by remember { mutableStateOf("OUTRO") }
+    var nivelEmergencia by remember { mutableStateOf("URGENTE") }
+    val categoryOptions = listOf(
+        "RISCO_IMEDIATO" to "Risco imediato",
+        "DESAPARECIMENTO" to "Assistido desaparecido",
+        "ACIDENTE" to "Acidente / lesão",
+        "CRISE_COMPORTAMENTAL" to "Crise comportamental",
+        "FUGA" to "Risco de fuga",
+        "BULLYING" to "Bullying",
+        "PROTECAO" to "Proteção / segurança",
+        "OUTRO" to "Outra ocorrência"
+    )
+    val levelOptions = listOf(
+        Triple("CRITICO", "Crítico", Color(0xFFB91C1C)),
+        Triple("URGENTE", "Urgente", Color(0xFFEA580C)),
+        Triple("ATENCAO", "Atenção", Color(0xFFCA8A04)),
+        Triple("INFORMATIVO", "Informativo", Color(0xFF2563EB))
+    )
     var mensagemEmergencia by remember { mutableStateOf("Alerta de emergência acionado pelo responsável.") }
     var autorizarLocalizacao by remember { mutableStateOf(false) }
     var showConfirmDialog by remember { mutableStateOf(false) }
@@ -159,8 +183,77 @@ fun SosScreen(
         ) {
             item {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                    Button(modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = if (tipoAlerta == "SOS") CIADIColors.ErrorRed else Color.White, contentColor = if (tipoAlerta == "SOS") Color.White else CIADIColors.Brown), onClick = { tipoAlerta = "SOS" }) { Text("SOS") }
-                    OutlinedButton(modifier = Modifier.weight(1f), onClick = { tipoAlerta = "BULLYING" }) { Text("Bullying") }
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (tipoAlerta == "SOS") CIADIColors.ErrorRed else Color.White,
+                            contentColor = if (tipoAlerta == "SOS") Color.White else CIADIColors.Brown
+                        ),
+                        onClick = {
+                            tipoAlerta = "SOS"
+                            if (categoriaAlerta == "BULLYING") categoriaAlerta = "OUTRO"
+                        }
+                    ) { Text("SOS") }
+                    Button(
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = if (tipoAlerta == "BULLYING") CIADIColors.ErrorRed else Color.White,
+                            contentColor = if (tipoAlerta == "BULLYING") Color.White else CIADIColors.Brown
+                        ),
+                        onClick = {
+                            tipoAlerta = "BULLYING"
+                            categoriaAlerta = "BULLYING"
+                            if (nivelEmergencia == "URGENTE") nivelEmergencia = "ATENCAO"
+                        }
+                    ) { Text("Bullying / Proteção") }
+                }
+            }
+
+            item {
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = CIADIColors.SurfaceWhite),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Text("Nível de emergência", fontWeight = FontWeight.Bold, color = CIADIColors.Brown)
+                        levelOptions.chunked(2).forEach { optionsRow ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                                optionsRow.forEach { option ->
+                                    Button(
+                                        onClick = { nivelEmergencia = option.first },
+                                        modifier = Modifier.weight(1f).height(42.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (nivelEmergencia == option.first) option.third else Color(0xFFF3F4F6),
+                                            contentColor = if (nivelEmergencia == option.first) Color.White else CIADIColors.TextPrimary
+                                        )
+                                    ) { Text(option.second, fontSize = 12.sp) }
+                                }
+                            }
+                        }
+                        Text("Tipo de ocorrência", fontWeight = FontWeight.Bold, color = CIADIColors.Brown)
+                        categoryOptions.chunked(2).forEach { optionsRow ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                                optionsRow.forEach { option ->
+                                    Button(
+                                        onClick = { categoriaAlerta = option.first },
+                                        modifier = Modifier.weight(1f).height(46.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = if (categoriaAlerta == option.first) CIADIColors.OrangePrimary else Color(0xFFF3F4F6),
+                                            contentColor = if (categoriaAlerta == option.first) Color.White else CIADIColors.TextPrimary
+                                        )
+                                    ) { Text(option.second, fontSize = 11.sp, textAlign = TextAlign.Center) }
+                                }
+                            }
+                        }
+                        Text(
+                            "Crítico: risco imediato. Urgente: intervenção rápida. Atenção: acompanhamento prioritário. Informativo: situação não urgente.",
+                            style = MaterialTheme.typography.bodySmall.copy(color = CIADIColors.TextSecondary)
+                        )
+                    }
                 }
             }
 
@@ -443,7 +536,7 @@ fun SosScreen(
                             Spacer(modifier = Modifier.width(12.dp))
                             Column {
                                 Text(
-                                    text = if (tipoAlerta == "SOS") "Alerta SOS transmitido!" else "Relato de bullying registado!",
+                                    text = if (tipoAlerta == "SOS") "Alerta SOS registado" else "Alerta de proteção registado",
                                     style = MaterialTheme.typography.titleSmall.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = CIADIColors.SuccessGreen
@@ -499,10 +592,18 @@ fun SosScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
                     onClick = {
-                        val targetPatient = selectedPatient ?: authorizedPatients.firstOrNull()
-                        if (targetPatient == null && user.activePatientName.isNullOrBlank()) {
-                            mensagemErro = "Por favor, selecione para quem é este alerta."
+                        // O nome de perfil não substitui o ID real do assistido.
+                        val targetPatient = selectedPatient
+                            ?: authorizedPatients.singleOrNull()
+                        if (targetPatient == null) {
+                            mensagemErro = if (authorizedPatients.isEmpty()) {
+                                "Não foi encontrado nenhum assistido autorizado. Atualize os vínculos no CIADI e tente novamente."
+                            } else {
+                                "Selecione o assistido para quem pretende enviar este alerta."
+                            }
+                            showConfirmDialog = false
                         } else {
+                            selectedPatient = targetPatient
                             mensagemErro = null
                             showConfirmDialog = true
                         }
@@ -550,7 +651,7 @@ fun SosScreen(
 
     // Modal de Confirmação Anti-Toque Acidental
     if (showConfirmDialog) {
-        val childName = selectedPatient?.nome ?: user.activePatientName ?: "Assistido"
+        val childName = selectedPatient?.nome ?: "Assistido"
         AlertDialog(
             onDismissRequest = { showConfirmDialog = false },
             title = {
@@ -579,10 +680,15 @@ fun SosScreen(
                             color = CIADIColors.OrangePrimary
                         )
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Categoria: ${categoryOptions.firstOrNull { it.first == categoriaAlerta }?.second ?: categoriaAlerta} · Nível: ${levelOptions.firstOrNull { it.first == nivelEmergencia }?.second ?: nivelEmergencia}",
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold, color = CIADIColors.ErrorRed)
+                    )
                     if (autorizarLocalizacao) {
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "📍 Coordenadas de localização serão anexadas ao alerta.",
+                            text = "📍 A localização será anexada se o dispositivo conseguir obter coordenadas válidas.",
                             style = MaterialTheme.typography.bodySmall.copy(color = CIADIColors.TextSecondary)
                         )
                     }
@@ -596,7 +702,13 @@ fun SosScreen(
                         resultadoSucesso = null
                         mensagemErro = null
 
-                        val pacienteId = selectedPatient?.id ?: user.id
+                        val pacienteId = selectedPatient?.id?.takeIf { id ->
+                            authorizedPatients.any { it.id == id }
+                        } ?: run {
+                            isLoading = false
+                            mensagemErro = "Não foi possível confirmar o assistido autorizado. Selecione-o novamente e tente."
+                            return@Button
+                        }
                         var lat: Double? = null
                         var lng: Double? = null
 
@@ -607,11 +719,33 @@ fun SosScreen(
                         }
 
                         coroutineScope.launch {
-                            val result = if (tipoAlerta == "BULLYING") {
-                                val bullying = repoImpl?.registrarDenunciaBullying(selectedPatient?.id, "Relato de bullying / proteção", mensagemEmergencia)
-                                if (bullying?.isSuccess == true) Result.success(SosAlertaResultDto(pacienteId, true, "Relato de bullying registado para a equipa CIADI.", bullying.getOrNull())) else Result.failure(bullying?.exceptionOrNull() ?: Exception("Não foi possível registar o relato."))
+                            val alertResult = repoImpl?.enviarAlertaSos(
+                                pacienteId = pacienteId,
+                                mensagem = mensagemEmergencia,
+                                latitude = lat,
+                                longitude = lng,
+                                localizacaoAutorizada = autorizarLocalizacao,
+                                tipoAlerta = tipoAlerta,
+                                categoria = categoriaAlerta,
+                                nivelEmergencia = nivelEmergencia
+                            )
+                            val result = if (tipoAlerta == "BULLYING" && alertResult?.isSuccess == true) {
+                                val bullying = repoImpl?.registrarDenunciaBullying(
+                                    pacienteId,
+                                    "Relato de bullying / proteção",
+                                    "$mensagemEmergencia\nCategoria: $categoriaAlerta; nível: $nivelEmergencia"
+                                )
+                                if (bullying?.isSuccess == true) {
+                                    alertResult
+                                } else {
+                                    val savedAlert = alertResult.getOrNull()
+                                    if (savedAlert != null) Result.success(savedAlert.copy(
+                                        mensagem = (savedAlert.mensagem ?: "Alerta registado.") +
+                                            " Atenção: o registo complementar de proteção não foi confirmado."
+                                    )) else alertResult
+                                }
                             } else {
-                                repoImpl?.enviarAlertaSos(pacienteId, mensagemEmergencia, lat, lng, autorizarLocalizacao)
+                                alertResult
                             }
 
                             isLoading = false

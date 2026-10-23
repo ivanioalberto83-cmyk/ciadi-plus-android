@@ -1,0 +1,5 @@
+# CIADI+ Supabase Edge Function configuration.
+# Webhook is public at HTTP layer because Meta/Resend cannot send Supabase JWTs;
+# the function validates provider signatures before processing any POST.
+[functions.ciadi-sos-provider-webhook]
+verify_jwt = false

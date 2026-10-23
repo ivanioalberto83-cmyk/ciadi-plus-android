@@ -327,16 +327,24 @@ data class CriarAlertaSosRequest(
     @param:Json(name = "p_mensagem") val mensagem: String,
     @param:Json(name = "p_latitude") val latitude: Double? = null,
     @param:Json(name = "p_longitude") val longitude: Double? = null,
-    @param:Json(name = "p_localizacao_autorizada") val localizacaoAutorizada: Boolean = false
+    @param:Json(name = "p_localizacao_autorizada") val localizacaoAutorizada: Boolean = false,
+    @param:Json(name = "p_tipo") val tipo: String = "SOS",
+    @param:Json(name = "p_categoria") val categoria: String = "OUTRO",
+    @param:Json(name = "p_nivel_emergencia") val nivelEmergencia: String = "URGENTE"
 )
 
 @JsonClass(generateAdapter = true)
 data class SosAlertaResultDto(
     @param:Json(name = "id") val id: String? = null,
+    @param:Json(name = "alerta_id") val alertaId: String? = null,
+    @param:Json(name = "success") val success: Boolean = true,
     @param:Json(name = "sucesso") val sucesso: Boolean = true,
     @param:Json(name = "mensagem") val mensagem: String? = null,
     @param:Json(name = "protocolo") val protocolo: String? = null,
-    @param:Json(name = "criado_em") val criadoEm: String? = null
+    @param:Json(name = "criado_em") val criadoEm: String? = null,
+    @param:Json(name = "whatsapp_status") val whatsappStatus: String? = null,
+    @param:Json(name = "email_status") val emailStatus: String? = null,
+    @param:Json(name = "localizacao_enviada") val localizacaoEnviada: Boolean = false
 )
 
 // 20. Portal Agendamento Autorizado (RPC: ciadi_portal_agendamentos_autorizados)
@@ -569,11 +577,11 @@ data class BullyingDenunciaCreateDto(
     @param:Json(name = "paciente_id") val pacienteId: String?,
     @param:Json(name = "anonima") val anonima: Boolean = false,
     @param:Json(name = "codigo_acompanhamento") val codigoAcompanhamento: String,
-    @param:Json(name = "categoria") val categoria: String = "BULLYING",
-    @param:Json(name = "gravidade") val gravidade: String = "MEDIA",
+    @param:Json(name = "categoria") val categoria: String = "bullying",
+    @param:Json(name = "gravidade") val gravidade: String = "normal",
     @param:Json(name = "titulo") val titulo: String,
     @param:Json(name = "descricao") val descricao: String,
     @param:Json(name = "local_ocorrencia") val localOcorrencia: String? = null,
     @param:Json(name = "evidencias") val evidencias: Map<String, String?> = emptyMap(),
-    @param:Json(name = "estado") val estado: String = "ABERTA"
+    @param:Json(name = "estado") val estado: String = "recebida"
 )

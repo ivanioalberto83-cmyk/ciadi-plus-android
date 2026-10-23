@@ -588,10 +588,13 @@ class SupabaseModulesRepositoryImpl(
         mensagem: String,
         latitude: Double?,
         longitude: Double?,
-        localizacaoAutorizada: Boolean
+        localizacaoAutorizada: Boolean,
+        tipoAlerta: String,
+        categoria: String,
+        nivelEmergencia: String
     ): Result<SosAlertaResultDto> = withContext(Dispatchers.IO) {
-        if (!clientFactory.isReadyForConnection()) {
-            return@withContext Result.failure(IllegalStateException("Supabase não configurado."))
+        if (!clientFactory.isReadyForConnection() || !sessionManager.isSessionValid()) {
+            return@withContext Result.failure(IllegalStateException("Sessão CIADI+ inválida ou Supabase não configurado."))
         }
         try {
             val req = com.example.data.remote.dto.CriarAlertaSosRequest(
@@ -599,23 +602,58 @@ class SupabaseModulesRepositoryImpl(
                 mensagem = mensagem,
                 latitude = latitude,
                 longitude = longitude,
-                localizacaoAutorizada = localizacaoAutorizada
+                localizacaoAutorizada = localizacaoAutorizada && latitude != null && longitude != null,
+                tipo = tipoAlerta,
+                categoria = categoria,
+                nivelEmergencia = nivelEmergencia
             )
             val resp = clientFactory.restApi.criarAlertaSos(req)
-            if (resp.isSuccessful) {
-                val protocoloGerado = "SOS-${System.currentTimeMillis() % 100000}"
-                Result.success(
-                    SosAlertaResultDto(
-                        id = pacienteId,
-                        sucesso = true,
-                        mensagem = "Alerta transmitido à equipe responsável do CIADI.",
-                        protocolo = protocoloGerado
-                    )
-                )
-            } else {
-                val errorMsg = SupabaseErrorHandler.parseHttpErrorMessage(resp.code())
-                Result.failure(Exception(errorMsg))
+            if (!resp.isSuccessful) {
+                return@withContext Result.failure(Exception(SupabaseErrorHandler.parseHttpErrorMessage(resp.code())))
             }
+
+            val rpcBody = org.json.JSONObject(resp.body()?.string().orEmpty())
+            val alertaId = rpcBody.optString("alerta_id").takeIf { it.isNotBlank() }
+                ?: return@withContext Result.failure(IllegalStateException("O CIADI registou uma resposta sem identificador de alerta."))
+            val protocolo = rpcBody.optString("protocolo").takeIf { it.isNotBlank() }
+            var whatsappStatus = rpcBody.optString("whatsapp_status", "pendente")
+            var emailStatus = rpcBody.optString("email_status", "pendente")
+            var dispatchDetail = "O alerta foi registado; o encaminhamento externo ainda não foi confirmado."
+
+            // A criação do alerta e o envio externo são etapas distintas. Não declarar entrega sem resposta do provedor.
+            try {
+                val dispatch = clientFactory.restApi.encaminharAlertaSos(mapOf("alerta_id" to alertaId))
+                val dispatchBody = org.json.JSONObject(dispatch.body()?.string().orEmpty())
+                if (dispatch.isSuccessful) {
+                    val channels = dispatchBody.optJSONObject("canais")
+                    whatsappStatus = channels?.optString("whatsapp", whatsappStatus) ?: whatsappStatus
+                    emailStatus = channels?.optString("email", emailStatus) ?: emailStatus
+                    dispatchDetail = "Encaminhamento processado. WhatsApp: $whatsappStatus; e-mail: $emailStatus."
+                } else {
+                    dispatchDetail = "Alerta registado, mas o envio externo não foi confirmado. WhatsApp: $whatsappStatus; e-mail: $emailStatus. Código de envio: ${dispatch.code()}."
+                }
+            } catch (_: Exception) {
+                dispatchDetail = "Alerta registado no CIADI, mas não foi possível confirmar o envio por WhatsApp/e-mail. A equipa deve verificar o painel."
+            }
+
+            val locationDetail = if (localizacaoAutorizada && latitude != null && longitude != null) {
+                " Localização incluída."
+            } else {
+                " Localização não disponível ou não autorizada."
+            }
+            Result.success(
+                SosAlertaResultDto(
+                    id = alertaId,
+                    alertaId = alertaId,
+                    success = true,
+                    sucesso = true,
+                    mensagem = "$dispatchDetail$locationDetail",
+                    protocolo = protocolo,
+                    whatsappStatus = whatsappStatus,
+                    emailStatus = emailStatus,
+                    localizacaoEnviada = localizacaoAutorizada && latitude != null && longitude != null
+                )
+            )
         } catch (e: Exception) {
             Result.failure(e)
         }
