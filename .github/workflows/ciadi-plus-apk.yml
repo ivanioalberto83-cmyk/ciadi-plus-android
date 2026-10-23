@@ -2,7 +2,7 @@ name: Build CIADI+
 
 on:
   push:
-    branches: [ main, feature/professional-menu-clinica-virtual ]
+    branches: [ main, feature/professional-menu-clinica-virtual, fix/sos-assistido-sync ]
     paths:
       - 'ciadi+ (1).zip'
       - 'android-source/**'
