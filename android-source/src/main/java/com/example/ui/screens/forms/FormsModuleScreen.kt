@@ -154,6 +154,12 @@ fun FormsModuleScreen(
                             scope.launch {
                                 // Validar autorização e origem do formulário antes de qualquer escrita no Supabase.
                                 when {
+                                    selectedPatient == null -> {
+                                        snackbarHostState.showSnackbar("Selecione um assistido antes de guardar ou submeter este formulário.")
+                                    }
+                                    submission.pacienteId != selectedPatient?.id -> {
+                                        snackbarHostState.showSnackbar("O assistido do formulário mudou. Confirme a seleção antes de submeter.")
+                                    }
                                     !user.hasPermission(Permission.SUBMIT_CLINICAL_FORM) -> {
                                         snackbarHostState.showSnackbar("O perfil A.T. não possui autorização para submeter formulários clínicos.")
                                     }
@@ -298,9 +304,10 @@ fun FormsModuleScreen(
                         .fillMaxWidth()
                         .clickable {
                             when {
-                                selectedPatient == null -> scope.launch { snackbarHostState.showSnackbar("Selecione primeiro o assistido.") }
                                 !user.hasPermission(Permission.SUBMIT_CLINICAL_FORM) -> scope.launch { snackbarHostState.showSnackbar("O seu perfil não está autorizado a preencher e submeter formulários clínicos.") }
                                 else -> {
+                                    // Abrir e consultar o formulário não exige assistido selecionado.
+                                    // A seleção será obrigatória no momento de guardar/submeter.
                                     activeFormToFill = form
                                     lastSubmission = null
                                 }
