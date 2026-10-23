@@ -673,7 +673,13 @@ fun ChatModuleScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clickable {
-                                            val destId = contacto.contactId
+                                            // A RPC exige o UUID do perfil Supabase, não o id da view nem o id do profissional.
+                                            val destId = contacto.perfilId?.takeIf { it.isNotBlank() }
+                                                ?: contacto.destinatarioId?.takeIf { it.isNotBlank() }
+                                            if (destId.isNullOrBlank()) {
+                                                scope.launch { snackbarHostState.showSnackbar("Este contacto não tem um perfil Supabase válido para iniciar conversa.") }
+                                                return@clickable
+                                            }
                                             scope.launch {
                                                 val res = repoImpl?.abrirConversaPrivada(
                                                     destinatarioId = destId,

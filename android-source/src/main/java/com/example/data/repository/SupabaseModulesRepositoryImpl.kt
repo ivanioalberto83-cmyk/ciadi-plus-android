@@ -956,9 +956,18 @@ class SupabaseModulesRepositoryImpl(
     override suspend fun marcarNotificacaoLida(id: String): Result<Unit> = marcarLida(id)
 
     override suspend fun marcarLida(id: String): Result<Unit> = withContext(Dispatchers.IO) {
-        if (!clientFactory.isReadyForConnection()) return@withContext Result.success(Unit)
+        if (!clientFactory.isReadyForConnection() || !sessionManager.isSessionValid()) {
+            return@withContext Result.failure(IllegalStateException("Sessão Supabase inválida. Inicie sessão novamente."))
+        }
+        if (id.isBlank()) return@withContext Result.failure(IllegalArgumentException("Identificador da notificação inválido."))
         try {
-            clientFactory.restApi.markNotificacaoRead(id, mapOf("lida" to true))
+            val response = clientFactory.restApi.markNotificacaoRead(id, mapOf("lida" to true))
+            if (!response.isSuccessful) {
+                val message = response.errorBody()?.string().orEmpty()
+                return@withContext Result.failure(
+                    Exception("Não foi possível atualizar a notificação (HTTP ${response.code()}). ${message.take(180)}")
+                )
+            }
             _notificacoes.value = _notificacoes.value.map {
                 if (it.id == id) it.copy(lida = true) else it
             }
