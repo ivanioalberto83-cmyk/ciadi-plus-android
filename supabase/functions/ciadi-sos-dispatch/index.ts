@@ -86,16 +86,41 @@ Deno.serve(async (req) => {
         if (!accessToken || !phoneNumberId) {
           outcome = { ok: false, error: "Faltam WHATSAPP_ACCESS_TOKEN/WHATSAPP_PHONE_NUMBER_ID" };
         } else {
+          const templateName = Deno.env.get("WHATSAPP_SOS_TEMPLATE_NAME");
+          const templateLanguage = Deno.env.get("WHATSAPP_SOS_TEMPLATE_LANGUAGE");
+          // If configured, use the institution's approved template for business-initiated messages.
+          // Template body variables must be ordered: level, protocol, patient, category, description, location.
+          const whatsappBody = templateName ? {
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: delivery.destinatario.replace(/\D/g, ""),
+            type: "template",
+            template: {
+              name: templateName,
+              language: { code: templateLanguage || "pt_PT" },
+              components: [{
+                type: "body",
+                parameters: [
+                  { type: "text", text: String(alert.nivel_emergencia) },
+                  { type: "text", text: String(alert.protocolo ?? alert.id) },
+                  { type: "text", text: patientName },
+                  { type: "text", text: String(alert.categoria) },
+                  { type: "text", text: String(alert.mensagem ?? "").slice(0, 800) },
+                  { type: "text", text: locationUrl }
+                ]
+              }]
+            }
+          } : {
+            messaging_product: "whatsapp",
+            recipient_type: "individual",
+            to: delivery.destinatario.replace(/\D/g, ""),
+            type: "text",
+            text: { preview_url: false, body: text }
+          };
           const resp = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
             method: "POST",
             headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-            body: JSON.stringify({
-              messaging_product: "whatsapp",
-              recipient_type: "individual",
-              to: delivery.destinatario.replace(/\D/g, ""),
-              type: "text",
-              text: { preview_url: false, body: text }
-            })
+            body: JSON.stringify(whatsappBody)
           });
           const data = await resp.json().catch(() => ({}));
           outcome = resp.ok
