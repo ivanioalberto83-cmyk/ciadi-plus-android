@@ -495,8 +495,10 @@ data class AtContactoDto(
     @param:Json(name = "telefone") val telefone: String? = null,
     @param:Json(name = "email") val email: String? = null
 ) {
+    // A RPC ciadi_chat_abrir_privado espera o UUID do perfil autenticado.
+    // Priorizar perfil_id evita enviar um id técnico da view como destinatário.
     val contactId: String
-        get() = destinatarioId?.takeIf { it.isNotBlank() } ?: perfilId ?: id ?: ""
+        get() = perfilId?.takeIf { it.isNotBlank() } ?: destinatarioId?.takeIf { it.isNotBlank() } ?: id ?: ""
     val contactName: String
         get() = nome?.takeIf { it.isNotBlank() } ?: "Contacto"
     val contactRole: String
