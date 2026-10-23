@@ -463,14 +463,14 @@ fun SosScreen(
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column {
                                     Text(
-                                        text = "Enviar Localização Atual",
+                                        text = "Enviar Localização Recente",
                                         style = MaterialTheme.typography.titleSmall.copy(
                                             fontWeight = FontWeight.Bold,
                                             color = CIADIColors.Brown
                                         )
                                     )
                                     Text(
-                                        text = "Opcional. Ajuda a equipe a identificar o local do alerta.",
+                                        text = "Opcional. Só será enviada se houver uma coordenada recente (até 15 minutos).",
                                         style = MaterialTheme.typography.bodySmall.copy(
                                             color = CIADIColors.TextSecondary,
                                             fontSize = 11.sp
@@ -797,8 +797,14 @@ private fun obterUltimaLocalizacao(context: Context): Location? {
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
             ?: return null
 
-        locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-            ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+        val candidates = listOfNotNull(
+            locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER),
+            locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+        )
+        val newest = candidates.maxByOrNull { it.time } ?: return null
+        val ageMillis = System.currentTimeMillis() - newest.time
+        // Nunca enviar silenciosamente uma localização antiga como se fosse atual.
+        if (ageMillis < 0L || ageMillis > 15 * 60 * 1000L) null else newest
     } catch (e: Exception) {
         null
     }
