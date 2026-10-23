@@ -14,6 +14,9 @@ screen = root / "src/main/java/com/example/ui/screens/sos/SosScreen.kt"
 if not screen.is_file():
     raise SystemExit(f"SosScreen.kt not found: {screen}")
 text = screen.read_text(encoding="utf-8")
+if 'sos_choose_contact' in text and 'ActivityResultContracts.PickContact()' in text:
+    print("SOS contact picker is already integrated in source; skipping overlay.")
+    raise SystemExit(0)
 
 def replace_once(old: str, new: str, label: str):
     global text
