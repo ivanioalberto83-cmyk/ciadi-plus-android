@@ -2,7 +2,7 @@ name: Build CIADI+
 
 on:
   push:
-    branches: [ main, feature/professional-menu-clinica-virtual ]
+    branches: [ main, feature/professional-menu-clinica-virtual, audit/supabase-integration-fix-2026-10 ]
     paths:
       - 'ciadi+ (1).zip'
       - 'android-source/**'
@@ -125,7 +125,7 @@ jobs:
         run: |
           set -euo pipefail
           cd "$PROJECT_DIR"
-          timeout 180s gradle test --no-daemon --stacktrace || echo "::warning::Unit tests failed or exceeded 180 seconds; continuing to APK build for install validation."
+          timeout 180s gradle test --no-daemon --stacktrace
 
       - name: Create CI debug keystore
         shell: bash
