@@ -128,13 +128,13 @@ replace_once(
                             )
                             val nomeAssistido = selectedPatient?.nome ?: user.activePatientName ?: "Assistido"
                             val mensagemPartilha = buildString {
-                                append("ALERTA SOS CIADI+\n")
-                                append("Assistido: $nomeAssistido\n")
-                                append("Tipo: $tipoAlerta\n")
-                                append("Mensagem: $mensagemEmergencia\n")
+                                append("ALERTA SOS CIADI+\\n")
+                                append("Assistido: $nomeAssistido\\n")
+                                append("Tipo: $tipoAlerta\\n")
+                                append("Mensagem: $mensagemEmergencia\\n")
                                 if (autorizarLocalizacao) {
                                     val loc = obterUltimaLocalizacao(context)
-                                    if (loc != null) append("Localização: https://maps.google.com/?q=${loc.latitude},${loc.longitude}\n")
+                                    if (loc != null) append("Localização: https://maps.google.com/?q=${loc.latitude},${loc.longitude}\\n")
                                 }
                                 append("Hora: ${java.time.ZonedDateTime.now().toString()}")
                             }
