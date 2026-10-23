@@ -39,7 +39,7 @@ import com.example.domain.model.UserProfile
 import com.example.domain.repository.ModulesRepository
 import com.example.domain.repository.NotificationsRepository
 import com.example.ui.components.CiadiTopBar
-import com.example.ui.designsystem.CIADIColors
+import com.example.ui.theme.CIADIColors
 import kotlinx.coroutines.launch
 
 @Composable
