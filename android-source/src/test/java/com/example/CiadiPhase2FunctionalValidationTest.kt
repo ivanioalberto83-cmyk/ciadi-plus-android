@@ -314,7 +314,7 @@ class CiadiPhase2FunctionalValidationTest {
                 tipoFormulario = "AVALIACAO",
                 schemaJson = schemaJson,
                 ativo = true,
-                versao = "1.0",
+                versao = 1,
                 publicado = true
             )
 
@@ -322,7 +322,7 @@ class CiadiPhase2FunctionalValidationTest {
             assertTrue(formDto.publicado)
             assertEquals(esp, formDto.areaAtuacao)
 
-            val jsonObject = JSONObject(formDto.schemaJson ?: "{}")
+            val jsonObject = JSONObject(formDto.schemaJson as? String ?: "{}")
             assertEquals(esp, jsonObject.getString("especialidade"))
             val campos = jsonObject.getJSONArray("campos")
             assertEquals(2, campos.length())
