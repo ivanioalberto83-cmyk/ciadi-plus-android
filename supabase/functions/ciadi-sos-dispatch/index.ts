@@ -128,7 +128,7 @@ Deno.serve(async (req) => {
       outcome = { ok: false, error: String(error).slice(0, 1000) };
     }
 
-    const newState = outcome.ok ? "enviado" : "falhou";
+    const newState = outcome.ok ? "aceite_provedor" : "falhou";
     await admin.from("ciadi_sos_entregas").update({
       estado: newState,
       id_provedor: outcome.providerId ?? null,
@@ -142,7 +142,9 @@ Deno.serve(async (req) => {
   const statusByChannel: Record<string, string> = {};
   for (const channel of ["whatsapp", "email"]) {
     const { data: rows } = await admin.from("ciadi_sos_entregas").select("estado").eq("alerta_id", alertaId).eq("canal", channel);
-    statusByChannel[channel] = rows?.some((r) => r.estado === "enviado") ? "enviado"
+    statusByChannel[channel] = rows?.some((r) => r.estado === "lido") ? "lido"
+      : rows?.some((r) => r.estado === "entregue") ? "entregue"
+      : rows?.some((r) => r.estado === "aceite_provedor") ? "aceite_provedor"
       : rows?.some((r) => r.estado === "falhou") ? "falhou"
       : rows?.length ? "pendente" : "nao_configurado";
   }
