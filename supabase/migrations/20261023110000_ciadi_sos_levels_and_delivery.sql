@@ -176,7 +176,7 @@ begin
     (perfil_id,paciente_id,tipo,mensagem,latitude,longitude,localizacao_autorizada,
      estado,categoria,nivel_emergencia,protocolo,canal_estado)
   values
-    (v_perfil,p_paciente_id,upper(p_tipo),v_mensagem,
+    (v_perfil,p_paciente_id,case when upper(p_tipo)='SOS' then 'sos' else 'emergencia' end,v_mensagem,
      case when v_location_ok then p_latitude else null end,
      case when v_location_ok then p_longitude else null end,
      v_location_ok,'aberto',upper(p_categoria),upper(p_nivel_emergencia),v_protocolo,
