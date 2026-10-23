@@ -40,12 +40,15 @@ Deno.serve(async (req) => {
   if (alertError || !alert) return json({ error: "Alerta não encontrado" }, 404);
 
   // Only the person who created the alert or authorized CIADI management may dispatch it.
+  const { data: actor } = await admin.from("perfis").select("nome_completo,nome_exibicao,tipo,ativo").eq("id", authData.user.id).maybeSingle();
   if (alert.perfil_id !== authData.user.id) {
-    const { data: profile } = await admin.from("perfis").select("tipo,ativo").eq("id", authData.user.id).maybeSingle();
-    if (!profile?.ativo || !["admin", "gestor", "operador"].includes(profile.tipo)) {
+    if (!actor?.ativo || !["admin", "gestor", "operador"].includes(actor.tipo)) {
       return json({ error: "Sem autorização para encaminhar este alerta" }, 403);
     }
   }
+  const { data: patient } = await admin.from("pacientes").select("nome_completo").eq("id", alert.paciente_id).maybeSingle();
+  const patientName = patient?.nome_completo ?? "Assistido não identificado";
+  const actorName = actor?.nome_exibicao ?? actor?.nome_completo ?? "Utilizador CIADI+";
 
   const { data: deliveries, error: deliveriesError } = await admin
     .from("ciadi_sos_entregas")
@@ -69,6 +72,8 @@ Deno.serve(async (req) => {
       const text = [
         `🚨 ALERTA CIADI — ${alert.nivel_emergencia}`,
         `Protocolo: ${alert.protocolo ?? alert.id}`,
+        `Assistido: ${patientName}`,
+        `Acionado por: ${actorName}`,
         `Tipo: ${alert.tipo} | Categoria: ${alert.categoria}`,
         `Ocorrido em: ${alert.criado_em}`,
         `Descrição: ${String(alert.mensagem ?? "").slice(0, 800)}`,
