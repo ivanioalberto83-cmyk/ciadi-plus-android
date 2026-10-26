@@ -499,9 +499,11 @@ fun SosScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
                     onClick = {
-                        val targetPatient = selectedPatient ?: authorizedPatients.firstOrNull()
-                        if (targetPatient == null && user.activePatientName.isNullOrBlank()) {
-                            mensagemErro = "Por favor, selecione para quem é este alerta."
+                        val targetPatient = selectedPatient ?: authorizedPatients.singleOrNull()
+                        if (tipoAlerta == "BULLYING" && targetPatient == null) {
+                            mensagemErro = "Para registar um relato de bullying, selecione o assistido autorizado."
+                        } else if (authorizedPatients.size > 1 && selectedPatient == null) {
+                            mensagemErro = "Selecione o assistido correto antes de continuar."
                         } else {
                             mensagemErro = null
                             showConfirmDialog = true
