@@ -20,10 +20,16 @@ Confirmar, em ambiente de homologação, que um assistido de teste já existente
 8. **Isolamento de acesso:** confirmar que um perfil não autorizado não consegue consultar alertas ou localização de outros utilizadores.
 9. **Registo de evidência:** guardar resultado de cada teste, hora, versão do APK, commit testado e eventuais erros, sem expor tokens nem dados pessoais desnecessários.
 
+## Verificação obrigatória do APK
+- O artefacto deve ser gerado pelo workflow Build CIADI+ depois do commit que contém as correções.
+- Confirmar que o head_sha da execução corresponde ao commit da branch feat/ciadi-plus-sos-whatsapp-homologacao que está a ser validado.
+- Confirmar assinatura APK, SHA-256 e resultado da compilação antes de partilhar o ficheiro.
+- Um APK produzido por um commit anterior não deve ser apresentado como versão atualizada.
+
 ## Estado atual
-- Correções de código submetidas na branch `feat/ciadi-plus-sos-whatsapp-homologacao`.
+- Correções de código submetidas na branch feat/ciadi-plus-sos-whatsapp-homologacao.
 - Teste automatizado adicionado para impedir a substituição do ID do assistido pelo ID do utilizador.
-- A execução de CI, instalação do APK recente e teste real com Dashboard ainda precisam de confirmação.
+- A execução de CI para o commit atual, instalação do APK recente e teste real com Dashboard ainda precisam de confirmação.
 - WhatsApp/e-mail não são considerados entregues até haver configuração do canal e evidência de envio/receção.
 
 ## Bloqueio de aprovação
