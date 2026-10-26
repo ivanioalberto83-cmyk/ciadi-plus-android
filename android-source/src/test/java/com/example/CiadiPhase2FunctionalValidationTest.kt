@@ -526,4 +526,21 @@ class CiadiPhase2FunctionalValidationTest {
         assertTrue("Responsável A pode acessar seu próprio paciente", podeAcessarPaciente(vinculosResponsavelA, pacienteDoResponsavelA))
         assertFalse("Responsável A NÃO pode acessar paciente da família B", podeAcessarPaciente(vinculosResponsavelA, pacienteDoResponsavelB))
     }
+
+    @Test
+    fun `test17 - SOS - assistido opcional nunca substituido pelo ID do utilizador`() {
+        val request = CriarAlertaSosRequest(
+            pacienteId = null,
+            mensagem = "Teste funcional SOS sem assistido associado",
+            latitude = null,
+            longitude = null,
+            localizacaoAutorizada = false
+        )
+        val json = moshi.adapter(CriarAlertaSosRequest::class.java).toJson(request)
+        val payload = JSONObject(json)
+
+        assertFalse("O payload não deve inventar ID do assistido", payload.has("p_paciente_id") && !payload.isNull("p_paciente_id"))
+        assertEquals("A localização deve estar explicitamente desativada", false, payload.getBoolean("p_localizacao_autorizada"))
+        assertEquals("A mensagem deve ser preservada", "Teste funcional SOS sem assistido associado", payload.getString("p_mensagem"))
+    }
 }
