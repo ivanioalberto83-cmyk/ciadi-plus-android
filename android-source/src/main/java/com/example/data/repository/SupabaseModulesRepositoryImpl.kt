@@ -590,8 +590,8 @@ class SupabaseModulesRepositoryImpl(
         longitude: Double?,
         localizacaoAutorizada: Boolean
     ): Result<SosAlertaResultDto> = withContext(Dispatchers.IO) {
-        if (!clientFactory.isReadyForConnection()) {
-            return@withContext Result.failure(IllegalStateException("Supabase não configurado."))
+        if (!clientFactory.isReadyForConnection() || !sessionManager.isSessionValid()) {
+            return@withContext Result.failure(IllegalStateException("Sessão CIADI+ inválida ou Supabase não configurado."))
         }
         try {
             val req = com.example.data.remote.dto.CriarAlertaSosRequest(
@@ -602,20 +602,44 @@ class SupabaseModulesRepositoryImpl(
                 localizacaoAutorizada = localizacaoAutorizada
             )
             val resp = clientFactory.restApi.criarAlertaSos(req)
-            if (resp.isSuccessful) {
-                val protocoloGerado = "SOS-${System.currentTimeMillis() % 100000}"
-                Result.success(
-                    SosAlertaResultDto(
-                        id = pacienteId,
-                        sucesso = true,
-                        mensagem = "Alerta transmitido à equipe responsável do CIADI.",
-                        protocolo = protocoloGerado
-                    )
+            if (!resp.isSuccessful) {
+                return@withContext Result.failure(
+                    Exception(SupabaseErrorHandler.parseHttpErrorMessage(resp.code()))
                 )
-            } else {
-                val errorMsg = SupabaseErrorHandler.parseHttpErrorMessage(resp.code())
-                Result.failure(Exception(errorMsg))
             }
+
+            // A RPC devolve o ID real do alerta e o protocolo. Não inventar um protocolo
+            // local nem usar o ID do paciente como se fosse o ID do alerta.
+            val raw = resp.body()?.string().orEmpty()
+            val payload = try {
+                org.json.JSONObject(raw)
+            } catch (_: Exception) {
+                null
+            }
+            if (payload == null || !payload.optBoolean("success", false)) {
+                val serverMessage = payload?.optString("mensagem")
+                    ?.takeIf { it.isNotBlank() }
+                    ?: "O servidor não confirmou o registo do alerta SOS."
+                return@withContext Result.failure(IllegalStateException(serverMessage))
+            }
+
+            val alertId = payload.optString("alerta_id").takeIf { it.isNotBlank() }
+                ?: return@withContext Result.failure(
+                    IllegalStateException("O servidor não devolveu a referência do alerta SOS.")
+                )
+            val protocol = payload.optString("protocolo").takeIf { it.isNotBlank() }
+            val serverMessage = payload.optString("mensagem")
+                .takeIf { it.isNotBlank() }
+                ?: "Alerta SOS registado no CIADI. A entrega pelos canais externos é confirmada separadamente."
+
+            Result.success(
+                SosAlertaResultDto(
+                    id = alertId,
+                    sucesso = true,
+                    mensagem = serverMessage,
+                    protocolo = protocol
+                )
+            )
         } catch (e: Exception) {
             Result.failure(e)
         }
