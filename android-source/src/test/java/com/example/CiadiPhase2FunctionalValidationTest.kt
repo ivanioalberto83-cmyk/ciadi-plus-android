@@ -226,7 +226,7 @@ class CiadiPhase2FunctionalValidationTest {
     @Test
     fun `test07 - AT - 10 secoes obrigatorias do perfil AT devidamente mapeadas`() {
         val sections = AtMenuSection.entries
-        assertEquals(10, sections.size)
+        assertEquals(11, sections.size)
 
         val sectionLabels = sections.map { it.label }
         assertTrue(sectionLabels.contains("Início"))
@@ -239,6 +239,7 @@ class CiadiPhase2FunctionalValidationTest {
         assertTrue(sectionLabels.contains("Organização"))
         assertTrue(sectionLabels.contains("Notificações"))
         assertTrue(sectionLabels.contains("Meu Perfil"))
+        assertTrue(sectionLabels.contains("Formulários"))
     }
 
     @Test
