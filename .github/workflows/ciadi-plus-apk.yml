@@ -2,7 +2,7 @@ name: Build CIADI+
 
 on:
   push:
-    branches: [ main, feature/professional-menu-clinica-virtual ]
+    branches: [ main, feature/professional-menu-clinica-virtual, fix/ciadi-official-branding-login-2026-10-26 ]
     paths:
       - 'ciadi+ (1).zip'
       - 'android-source/**'
