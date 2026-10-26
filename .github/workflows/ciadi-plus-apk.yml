@@ -2,7 +2,7 @@ name: Build CIADI+
 
 on:
   push:
-    branches: [ main, feature/professional-menu-clinica-virtual ]
+    branches: [ main, feature/professional-menu-clinica-virtual, feat/ciadi-plus-sos-whatsapp-homologacao ]
     paths:
       - 'ciadi+ (1).zip'
       - 'android-source/**'
@@ -121,11 +121,13 @@ jobs:
           echo "Static security audit completed."
 
       - name: Unit tests
+        id: unit_tests
+        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
           cd "$PROJECT_DIR"
-          timeout 180s gradle test --no-daemon --stacktrace || echo "::warning::Unit tests failed or exceeded 180 seconds; continuing to APK build for install validation."
+          timeout 180s gradle test --no-daemon --stacktrace
 
       - name: Create CI debug keystore
         shell: bash
@@ -237,6 +239,13 @@ jobs:
           name: CIADI-plus-source-audit
           path: CIADI-plus-source-audit.zip
           retention-days: 7
+
+      - name: Report test failures after publishing debug artifact
+        if: steps.unit_tests.outcome == 'failure'
+        shell: bash
+        run: |
+          echo "::error::Unit tests failed. The debug APK, if built and signed, is for investigation only and is not production-approved."
+          exit 1
 
       - name: Upload audit reports
         if: always() && env.PROJECT_DIR != ''

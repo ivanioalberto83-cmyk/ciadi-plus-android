@@ -323,7 +323,7 @@ data class NotificacaoDto(
 // 19. SOS CIADI+ (RPC: ciadi_criar_alerta_sos)
 @JsonClass(generateAdapter = true)
 data class CriarAlertaSosRequest(
-    @param:Json(name = "p_paciente_id") val pacienteId: String,
+    @param:Json(name = "p_paciente_id") val pacienteId: String? = null,
     @param:Json(name = "p_mensagem") val mensagem: String,
     @param:Json(name = "p_latitude") val latitude: Double? = null,
     @param:Json(name = "p_longitude") val longitude: Double? = null,

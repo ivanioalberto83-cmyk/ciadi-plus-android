@@ -226,7 +226,7 @@ class CiadiPhase2FunctionalValidationTest {
     @Test
     fun `test07 - AT - 10 secoes obrigatorias do perfil AT devidamente mapeadas`() {
         val sections = AtMenuSection.entries
-        assertEquals(10, sections.size)
+        assertEquals(11, sections.size)
 
         val sectionLabels = sections.map { it.label }
         assertTrue(sectionLabels.contains("Início"))
@@ -239,6 +239,7 @@ class CiadiPhase2FunctionalValidationTest {
         assertTrue(sectionLabels.contains("Organização"))
         assertTrue(sectionLabels.contains("Notificações"))
         assertTrue(sectionLabels.contains("Meu Perfil"))
+        assertTrue(sectionLabels.contains("Formulários"))
     }
 
     @Test
@@ -314,7 +315,7 @@ class CiadiPhase2FunctionalValidationTest {
                 tipoFormulario = "AVALIACAO",
                 schemaJson = schemaJson,
                 ativo = true,
-                versao = "1.0",
+                versao = 1,
                 publicado = true
             )
 
@@ -322,7 +323,7 @@ class CiadiPhase2FunctionalValidationTest {
             assertTrue(formDto.publicado)
             assertEquals(esp, formDto.areaAtuacao)
 
-            val jsonObject = JSONObject(formDto.schemaJson ?: "{}")
+            val jsonObject = JSONObject(formDto.schemaJson as? String ?: "{}")
             assertEquals(esp, jsonObject.getString("especialidade"))
             val campos = jsonObject.getJSONArray("campos")
             assertEquals(2, campos.length())
@@ -524,5 +525,22 @@ class CiadiPhase2FunctionalValidationTest {
 
         assertTrue("Responsável A pode acessar seu próprio paciente", podeAcessarPaciente(vinculosResponsavelA, pacienteDoResponsavelA))
         assertFalse("Responsável A NÃO pode acessar paciente da família B", podeAcessarPaciente(vinculosResponsavelA, pacienteDoResponsavelB))
+    }
+
+    @Test
+    fun `test17 - SOS - assistido opcional nunca substituido pelo ID do utilizador`() {
+        val request = CriarAlertaSosRequest(
+            pacienteId = null,
+            mensagem = "Teste funcional SOS sem assistido associado",
+            latitude = null,
+            longitude = null,
+            localizacaoAutorizada = false
+        )
+        val json = moshi.adapter(CriarAlertaSosRequest::class.java).toJson(request)
+        val payload = JSONObject(json)
+
+        assertFalse("O payload não deve inventar ID do assistido", payload.has("p_paciente_id") && !payload.isNull("p_paciente_id"))
+        assertEquals("A localização deve estar explicitamente desativada", false, payload.getBoolean("p_localizacao_autorizada"))
+        assertEquals("A mensagem deve ser preservada", "Teste funcional SOS sem assistido associado", payload.getString("p_mensagem"))
     }
 }
