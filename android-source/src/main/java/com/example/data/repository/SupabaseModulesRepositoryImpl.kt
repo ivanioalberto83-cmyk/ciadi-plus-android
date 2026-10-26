@@ -956,9 +956,19 @@ class SupabaseModulesRepositoryImpl(
     override suspend fun marcarNotificacaoLida(id: String): Result<Unit> = marcarLida(id)
 
     override suspend fun marcarLida(id: String): Result<Unit> = withContext(Dispatchers.IO) {
-        if (!clientFactory.isReadyForConnection()) return@withContext Result.success(Unit)
+        if (!clientFactory.isReadyForConnection()) {
+            return@withContext Result.failure(IllegalStateException("Supabase não configurado ou sessão inválida."))
+        }
+        if (id.isBlank()) {
+            return@withContext Result.failure(IllegalArgumentException("ID da notificação inválido."))
+        }
         try {
-            clientFactory.restApi.markNotificacaoRead(id, mapOf("lida" to true))
+            val response = clientFactory.restApi.markNotificacaoRead("eq.$id", mapOf("lida" to true))
+            if (!response.isSuccessful) {
+                return@withContext Result.failure(
+                    IllegalStateException(SupabaseErrorHandler.parseHttpErrorMessage(response.code()))
+                )
+            }
             _notificacoes.value = _notificacoes.value.map {
                 if (it.id == id) it.copy(lida = true) else it
             }

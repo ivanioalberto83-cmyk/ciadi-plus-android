@@ -2,10 +2,16 @@ name: Build CIADI+
 
 on:
   push:
-    branches: [ main, feature/professional-menu-clinica-virtual ]
+    branches:
+      - main
+      - feature/professional-menu-clinica-virtual
+      - feature/sos-android-contact-picker
+      - 'feature/**'
+      - 'fix/**'
     paths:
       - 'ciadi+ (1).zip'
       - 'android-source/**'
+      - 'scripts/**'
       - '.github/workflows/**'
       - 'README.md'
       - 'AGENTS.md'
@@ -57,6 +63,13 @@ jobs:
           fi
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
           echo "Android project: $PROJECT_DIR"
+
+      - name: Apply privacy-preserving SOS contact picker
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/patch-sos-contacts.py "$PROJECT_DIR"
+          grep -nE 'sos_choose_contact|sos_share_whatsapp|sos_share_sms|PickContact' "$PROJECT_DIR/src/main/java/com/example/ui/screens/sos/SosScreen.kt"
 
       - name: Audit clinical forms source flow
         shell: bash
@@ -125,7 +138,7 @@ jobs:
         run: |
           set -euo pipefail
           cd "$PROJECT_DIR"
-          timeout 180s gradle test --no-daemon --stacktrace || echo "::warning::Unit tests failed or exceeded 180 seconds; continuing to APK build for install validation."
+          timeout 180s gradle test --no-daemon --stacktrace
 
       - name: Create CI debug keystore
         shell: bash
@@ -153,7 +166,7 @@ jobs:
         run: |
           set -euo pipefail
           cd "$PROJECT_DIR"
-          gradle assembleDebug --no-daemon --stacktrace -x lint -x test
+          gradle assembleDebug --no-daemon --stacktrace -x lint
 
       - name: Align and explicitly sign APK
         shell: bash
@@ -211,7 +224,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: CIADI-plus-2.0.2-debug-apk
+          name: CIADI-plus-debug-run-${{ github.run_number }}-sha-${{ github.sha }}
           path: |
             CIADI-plus-debug.apk
             CIADI-plus-debug.apk.sha256
