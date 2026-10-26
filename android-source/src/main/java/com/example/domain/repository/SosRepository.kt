@@ -15,7 +15,7 @@ interface SosRepository {
     ): Result<String>
 
     suspend fun enviarAlertaSos(
-        pacienteId: String,
+        pacienteId: String?,
         mensagem: String,
         latitude: Double?,
         longitude: Double?,
