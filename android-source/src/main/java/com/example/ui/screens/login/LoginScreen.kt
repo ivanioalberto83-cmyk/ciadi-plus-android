@@ -133,7 +133,7 @@ fun LoginScreen(
                 ) {
                     Image(
                         painter = painterResource(id = R.drawable.ic_ciadi_logo_1790332105105),
-                        contentDescription = "Logo Oficial CIADI+",
+                        contentDescription = "Identidade visual CIADI+ (aguarda validação do logótipo oficial)",
                         modifier = Modifier.size(64.dp)
                     )
                 }
@@ -183,103 +183,62 @@ fun LoginScreen(
 
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        Text(
-                            text = "Selecione o seu perfil de acesso:",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontSize = 14.sp,
-                                color = CIADIColors.TextSecondary
+                        var showPortalChoices by remember { mutableStateOf(false) }
+
+                        if (!showPortalChoices) {
+                            Text(
+                                text = "Aceda aos serviços digitais do CIADI.",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = 14.sp,
+                                    color = CIADIColors.TextSecondary
+                                )
                             )
-                        )
-
-                        Spacer(modifier = Modifier.height(14.dp))
-
-                        // As 5 portas de entrada por perfil solicitadas no item 39:
-                        // [ A.T. ] [ FAMÍLIA ] [ ADMIN ] [ SECRETARIA ] [ PROFISSIONAL ]
-                        val portalDoors = listOf(
-                            Triple(UserRole.AT, "A.T.", "Acompanhante Terapêutico"),
-                            Triple(UserRole.RESPONSAVEL, "FAMÍLIA", "Pais e Responsáveis Legais"),
-                            Triple(UserRole.ADMIN, "ADMIN", "Administração Institucional"),
-                            Triple(UserRole.OPERADOR, "SECRETARIA", "Secretaria & Atendimento"),
-                            Triple(UserRole.PROFISSIONAL, "PROFISSIONAL", "Corpo Clínico Especializado")
-                        )
-
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            portalDoors.forEach { (doorRole, title, subtitle) ->
-                                val isSelected = uiState.selectedPortalDoor == doorRole
-                                val borderColor = if (isSelected) CIADIColors.OrangePrimary else CIADIColors.Outline
-                                val backgroundColor = if (isSelected) CIADIColors.CreamLight else CIADIColors.SurfaceCard
-
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(backgroundColor)
-                                        .border(
-                                            width = if (isSelected) 2.dp else 1.dp,
-                                            color = borderColor,
-                                            shape = RoundedCornerShape(12.dp)
-                                        )
-                                        .clickable { viewModel.onPortalDoorSelected(doorRole) }
-                                        .padding(horizontal = 14.dp, vertical = 10.dp)
-                                        .testTag("portal_door_${doorRole.code}")
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
+                            Spacer(modifier = Modifier.height(18.dp))
+                            Button(
+                                onClick = { showPortalChoices = true },
+                                shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = CIADIColors.OrangePrimary),
+                                modifier = Modifier.fillMaxWidth().height(52.dp).testTag("start_login_button")
+                            ) {
+                                Text("Entrar na minha conta", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        } else {
+                            Text(
+                                text = "Escolha a área de entrada. A autorização será confirmada pela sua conta.",
+                                style = MaterialTheme.typography.bodyMedium.copy(
+                                    fontSize = 14.sp,
+                                    color = CIADIColors.TextSecondary
+                                )
+                            )
+                            Spacer(modifier = Modifier.height(14.dp))
+                            val portalDoors = listOf(
+                                Triple(UserRole.ADMIN, "ADMINISTRADOR", "Gestão institucional"),
+                                Triple(UserRole.PROFISSIONAL, "PROFISSIONAL / A.T.", "Área clínica e acompanhamento"),
+                                Triple(UserRole.RESPONSAVEL, "FAMÍLIA / RESPONSÁVEL", "Área familiar e acompanhamento")
+                            )
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                                portalDoors.forEach { (doorRole, title, subtitle) ->
+                                    val isSelected = uiState.selectedPortalDoor == doorRole
+                                    val borderColor = if (isSelected) CIADIColors.OrangePrimary else CIADIColors.Outline
+                                    val backgroundColor = if (isSelected) CIADIColors.CreamLight else CIADIColors.SurfaceCard
+                                    Box(
+                                        modifier = Modifier.fillMaxWidth()
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(backgroundColor)
+                                            .border(if (isSelected) 2.dp else 1.dp, borderColor, RoundedCornerShape(12.dp))
+                                            .clickable { viewModel.onPortalDoorSelected(doorRole) }
+                                            .padding(horizontal = 14.dp, vertical = 12.dp)
+                                            .testTag("portal_door_${doorRole.code}")
                                     ) {
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(
-                                                text = title,
-                                                style = MaterialTheme.typography.titleMedium.copy(
-                                                    fontSize = 15.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = if (isSelected) CIADIColors.OrangeDark else CIADIColors.TextPrimary
-                                                )
-                                            )
-                                            Text(
-                                                text = subtitle,
-                                                style = MaterialTheme.typography.bodySmall.copy(
-                                                    fontSize = 12.sp,
-                                                    color = CIADIColors.TextSecondary
-                                                )
-                                            )
-                                        }
-
-                                        Box(
-                                            modifier = Modifier
-                                                .size(20.dp)
-                                                .clip(RoundedCornerShape(10.dp))
-                                                .background(
-                                                    if (isSelected) CIADIColors.OrangePrimary else Color.Transparent
-                                                )
-                                                .border(
-                                                    width = 2.dp,
-                                                    color = if (isSelected) CIADIColors.OrangePrimary else CIADIColors.Outline,
-                                                    shape = RoundedCornerShape(10.dp)
-                                                ),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            if (isSelected) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .size(8.dp)
-                                                        .clip(RoundedCornerShape(4.dp))
-                                                        .background(Color.White)
-                                                )
-                                            }
+                                        Column {
+                                            Text(title, style = MaterialTheme.typography.titleMedium.copy(fontSize = 15.sp, fontWeight = FontWeight.Bold, color = if (isSelected) CIADIColors.OrangeDark else CIADIColors.TextPrimary))
+                                            Text(subtitle, style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp, color = CIADIColors.TextSecondary))
                                         }
                                     }
                                 }
                             }
-                        }
-
-                        Spacer(modifier = Modifier.height(18.dp))
-
-                        // Campo de E-mail Limpo (Sem credenciais de teste ou hardcode)
+                            Spacer(modifier = Modifier.height(18.dp))
+                        // Credenciais introduzidas pelo utilizador; nenhuma conta de teste embutida.
                         OutlinedTextField(
                             value = uiState.email,
                             onValueChange = { viewModel.onEmailChanged(it) },
@@ -392,6 +351,8 @@ fun LoginScreen(
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
+
+                        TextButton(onClick = { showPortalChoices = false }, modifier = Modifier.fillMaxWidth()) { Text("Voltar à seleção de acesso", color = CIADIColors.TextSecondary) }
 
                         // Opção de Recuperar Senha
                         TextButton(
