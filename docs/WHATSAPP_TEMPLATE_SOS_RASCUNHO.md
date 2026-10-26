@@ -8,14 +8,14 @@
 
 ## Corpo sugerido
 
-`Alerta SOS CIADI: foi registado um alerta de nível {{1}} (categoria {{2}}) às {{3}}. Referência: {{4}}. {{5}}. Consulte o Dashboard CIADI para os detalhes autorizados.`
+`Alerta SOS CIADI: referência {{1}}. Nível {{2}}, categoria {{3}}, registado às {{4}}. {{5}} Consulte o Dashboard CIADI para os detalhes autorizados.`
 
 ## Variáveis de exemplo para pré-visualização
 
-1. Nível: ALTO
-2. Categoria: segurança
-3. Data/hora: 26/10/2026 10:30
-4. Referência: SOS-EXEMPLO-001 (apenas demonstração, sem dados reais)
+1. Referência: SOS-EXEMPLO-001 (apenas demonstração, sem dados reais)
+2. Nível: ALTO
+3. Categoria: segurança
+4. Data/hora: 26/10/2026 10:30
 5. Localização: Localização autorizada disponível no Dashboard / Localização não partilhada
 
 ## Privacidade e segurança
