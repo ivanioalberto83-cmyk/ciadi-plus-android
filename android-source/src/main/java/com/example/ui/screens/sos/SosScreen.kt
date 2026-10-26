@@ -552,7 +552,7 @@ fun SosScreen(
 
     // Modal de Confirmação Anti-Toque Acidental
     if (showConfirmDialog) {
-        val childName = selectedPatient?.nome ?: user.activePatientName ?: "Assistido"
+        val childName = (selectedPatient ?: authorizedPatients.singleOrNull())?.displayName ?: "Sem assistido associado — alerta do utilizador autenticado"
         AlertDialog(
             onDismissRequest = { showConfirmDialog = false },
             title = {
