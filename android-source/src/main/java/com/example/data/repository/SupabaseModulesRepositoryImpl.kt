@@ -584,7 +584,7 @@ class SupabaseModulesRepositoryImpl(
 
     // --- SosRepository Impl (RPC: ciadi_criar_alerta_sos) ---
     override suspend fun enviarAlertaSos(
-        pacienteId: String,
+        pacienteId: String?,
         mensagem: String,
         latitude: Double?,
         longitude: Double?,
