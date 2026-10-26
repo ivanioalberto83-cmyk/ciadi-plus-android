@@ -63,7 +63,7 @@ interface SupabaseRestApi {
     // --- 3. Vínculos Familiares (tabela: ciadi_vinculos_familiares) ---
     @GET("rest/v1/ciadi_vinculos_familiares")
     suspend fun getVinculosFamiliares(
-        @Query("select") select: String = "*,pacientes(*)",
+        @Query("select") select: String = "*,paciente:pacientes(*)",
         @Query("perfil_id") perfilIdFilter: String? = null
     ): Response<List<VinculoFamiliarDto>>
 
