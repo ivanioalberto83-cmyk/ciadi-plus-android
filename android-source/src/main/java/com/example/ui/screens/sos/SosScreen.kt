@@ -540,9 +540,15 @@ fun SosScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
                     onClick = {
-                        val targetPatient = selectedPatient ?: authorizedPatients.firstOrNull()
-                        if (targetPatient == null && user.activePatientName.isNullOrBlank()) {
-                            mensagemErro = "Por favor, selecione para quem é este alerta."
+                        if (isLoadingPatients) {
+                            mensagemErro = "Aguarde enquanto carregamos os assistidos autorizados."
+                        } else if (patientsLoadError != null) {
+                            mensagemErro = "Não foi possível validar os assistidos autorizados. Toque em Tentar novamente."
+                        } else if (selectedPatient == null) {
+                            mensagemErro = if (authorizedPatients.isEmpty())
+                                "Esta conta não tem assistidos autorizados disponíveis. Verifique o vínculo com o CIADI."
+                            else
+                                "Selecione o assistido para este alerta."
                         } else {
                             mensagemErro = null
                             showConfirmDialog = true
@@ -591,7 +597,7 @@ fun SosScreen(
 
     // Modal de Confirmação Anti-Toque Acidental
     if (showConfirmDialog) {
-        val childName = selectedPatient?.nome ?: user.activePatientName ?: "Assistido"
+        val childName = selectedPatient?.nome ?: "Assistido não selecionado"
         AlertDialog(
             onDismissRequest = { showConfirmDialog = false },
             title = {
@@ -637,7 +643,7 @@ fun SosScreen(
                         resultadoSucesso = null
                         mensagemErro = null
 
-                        val pacienteId = selectedPatient?.id ?: user.id
+                        val pacienteId = selectedPatient?.id ?: return@Button
                         var lat: Double? = null
                         var lng: Double? = null
 
@@ -649,7 +655,7 @@ fun SosScreen(
 
                         coroutineScope.launch {
                             val result = if (tipoAlerta == "BULLYING") {
-                                val bullying = repoImpl?.registrarDenunciaBullying(selectedPatient?.id, "Relato de bullying / proteção", mensagemEmergencia)
+                                val bullying = repoImpl?.registrarDenunciaBullying(pacienteId, "Relato de bullying / proteção", mensagemEmergencia)
                                 if (bullying?.isSuccess == true) Result.success(SosAlertaResultDto(pacienteId, true, "Relato de bullying registado para a equipa CIADI.", bullying.getOrNull())) else Result.failure(bullying?.exceptionOrNull() ?: Exception("Não foi possível registar o relato."))
                             } else {
                                 repoImpl?.enviarAlertaSos(pacienteId, mensagemEmergencia, lat, lng, autorizarLocalizacao)
