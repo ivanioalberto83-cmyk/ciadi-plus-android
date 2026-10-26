@@ -598,7 +598,7 @@ fun SosScreen(
                         resultadoSucesso = null
                         mensagemErro = null
 
-                        val pacienteId = selectedPatient?.id ?: user.id
+                        val pacienteId = (selectedPatient ?: authorizedPatients.singleOrNull())?.id
                         var lat: Double? = null
                         var lng: Double? = null
 
