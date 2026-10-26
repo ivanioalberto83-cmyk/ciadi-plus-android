@@ -1029,7 +1029,7 @@ class SupabaseModulesRepositoryImpl(
                     if (resp.isSuccessful) {
                         val vinculos = resp.body().orEmpty()
                         _vinculosFamiliares.value = vinculos
-                        val pacientesExtraidos = vinculos.mapNotNull { it.paciente }
+                        val pacientesExtraidos = vinculos.filter { it.ativo }.mapNotNull { it.paciente }.distinctBy { it.id }
                         _pacientes.value = pacientesExtraidos
                         // Regra CIADI+: Se houver exatamente 1 criança autorizada, apresenta diretamente.
                         // Se houver várias crianças, NÃO seleciona automaticamente para exigir confirmação do usuário.
