@@ -238,6 +238,7 @@ fun LoginScreen(
                                 }
                             }
                             Spacer(modifier = Modifier.height(18.dp))
+                        if (showPortalChoices) {
                         // Credenciais introduzidas pelo utilizador; nenhuma conta de teste embutida.
                         OutlinedTextField(
                             value = uiState.email,
@@ -388,6 +389,7 @@ fun LoginScreen(
                                     .clickable { onNavigateToSolicitarAcesso() }
                                     .testTag("link_solicitar_acesso")
                             )
+                        }
                         }
                     }
                 }
