@@ -96,10 +96,35 @@ fun SosScreen(
     val authorizedPatients by patientsFlow.collectAsState()
     var selectedPatient by remember { mutableStateOf<PacienteDto?>(null) }
 
-    // Atualiza seleção com base nas regras: se 1 criança, apresenta diretamente; se várias, usuário escolhe
+    var isLoadingPatients by remember { mutableStateOf(true) }
+    var patientsLoadError by remember { mutableStateOf<String?>(null) }
+
+    // Carrega os vínculos autorizados ao abrir o ecrã e permite nova tentativa.
+    // A seleção da criança fica sempre a cargo do utilizador.
+    suspend fun loadAuthorizedPatients() {
+        isLoadingPatients = true
+        patientsLoadError = null
+        val repo = repoImpl
+        if (repo == null) {
+            patientsLoadError = "Não foi possível ligar ao serviço de assistidos. Volte a entrar na conta e tente novamente."
+            isLoadingPatients = false
+            return
+        }
+        val result = repo.syncFamilyBonds()
+        if (result.isFailure) {
+            patientsLoadError = result.exceptionOrNull()?.message
+                ?: "Falha ao carregar os assistidos autorizados. Tente novamente."
+        }
+        isLoadingPatients = false
+    }
+
+    LaunchedEffect(repoImpl) {
+        loadAuthorizedPatients()
+    }
+
     LaunchedEffect(authorizedPatients) {
-        if (authorizedPatients.size == 1 && selectedPatient == null) {
-            selectedPatient = authorizedPatients.first()
+        if (selectedPatient != null && authorizedPatients.none { it.id == selectedPatient?.id }) {
+            selectedPatient = null
         }
     }
 
@@ -234,32 +259,48 @@ fun SosScreen(
                         )
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        if (authorizedPatients.isEmpty()) {
-                            // Se nenhuma criança retornada pelo RLS ainda
-                            Row(
+                        if (isLoadingPatients || authorizedPatients.isEmpty()) {
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(10.dp))
                                     .background(CIADIColors.CreamLight)
                                     .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Person,
-                                    contentDescription = null,
-                                    tint = CIADIColors.OrangePrimary
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = if (!user.activePatientName.isNullOrBlank())
-                                        "Assistido vinculado: ${user.activePatientName}"
-                                    else
-                                        "Carregando assistidos autorizados...",
-                                    style = MaterialTheme.typography.bodySmall.copy(
-                                        color = CIADIColors.TextPrimary,
-                                        fontWeight = FontWeight.Medium
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (isLoadingPatients) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(20.dp),
+                                            strokeWidth = 2.dp,
+                                            color = CIADIColors.OrangePrimary
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Default.Person,
+                                            contentDescription = null,
+                                            tint = CIADIColors.OrangePrimary
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = when {
+                                            isLoadingPatients -> "A carregar assistidos autorizados…"
+                                            patientsLoadError != null -> patientsLoadError!!
+                                            else -> "Nenhum assistido autorizado encontrado para esta conta."
+                                        },
+                                        style = MaterialTheme.typography.bodySmall.copy(
+                                            color = CIADIColors.TextPrimary,
+                                            fontWeight = FontWeight.Medium
+                                        )
                                     )
-                                )
+                                }
+                                if (!isLoadingPatients) {
+                                    OutlinedButton(
+                                        onClick = { coroutineScope.launch { loadAuthorizedPatients() } },
+                                        enabled = !isLoadingPatients
+                                    ) { Text("Tentar novamente") }
+                                }
                             }
                         } else {
                             // Lista de crianças autorizadas reais
